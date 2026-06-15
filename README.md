@@ -70,7 +70,7 @@ Open multiple browser tabs, create/join the same room code, and play together!
 - 5-min demo video script included below
 - Meets all technical requirements: multiplayer, performance, progression, engagement
 
-Built following the strict 1-day MVP plan from PRD.md to satisfy ClientRequirements.pdf Path 2.
+Built following Monica’s strict 1-day MVP plan from PRD.md to satisfy ClientRequirements.pdf Path 2.
 
 ---
 
