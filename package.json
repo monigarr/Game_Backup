@@ -1,0 +1,22 @@
+{
+  "name": "orbchase",
+  "version": "1.0.0",
+  "description": "OrbChase - 2D Multiplayer Browser Game with Phaser 3 and Socket.io",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node server/index.js",
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "phaser": "^3.80.1",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
+}
