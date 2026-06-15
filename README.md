@@ -4,6 +4,12 @@
 
 Fast-paced real-time 2D arena game where players compete to collect the most orbs while dodging rotating hazards and using dash abilities. Features Socket.io multiplayer, level progression, and 3 unlockable arenas.
 
+VERCEL URLS: 
+https://game-backup-chi.vercel.app/
+https://game-backup-3u98te9h1-monigarr-projects.vercel.app/
+https://game-backup-git-main-monigarr-projects.vercel.app/
+
+
 ## Features
 - Real-time multiplayer (2-4 players per room via Socket.io)
 - Smooth 60fps gameplay with client prediction + server reconciliation

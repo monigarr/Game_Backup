@@ -1,10 +1,11 @@
 # Brainlift - OrbChase AI-Augmented Development Log
 
-**NOTE: This is my backup game because my original Unity Game was too ambitious and too many problems with multiplayer.**
+**NOTE: This is my backup game because my original Unity Game was too ambitious for the time frame & resources, it created too many problems with multiplayer and the processing power limitations of my laptop regarding audio / video and large Unity file sizes. (https://github.com/monigarr/karonhiake).**
 
 **Project:** Game Week - Path 2 Browser 2D Multiplayer (Phaser 3 + Socket.io)  
 **Timeline:** 1 Day (June 15, 2026)  
 **Goal:** Ship full ClientRequirements deliverables + deployable game tonight
+**GitHub:** https://github.com/monigarr/Game_Backup
 
 ## Learning Methodology
 Used Cursor AI (Grok 4.3) + strict PRD to rapidly master unfamiliar stack (Phaser 3, Socket.io rooms, Vite). Focused on:
