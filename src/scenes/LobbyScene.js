@@ -12,81 +12,153 @@ export default class LobbyScene extends Phaser.Scene {
   create() {
     const { width, height } = this.cameras.main;
 
-    // Full dark background
-    this.add.rectangle(width / 2, height / 2, width, height, 0x0a0a1a);
+    // === STARRY SPACE BACKGROUND ===
+    this.add.rectangle(width / 2, height / 2, width, height, 0x05050f);
+    // Scattered stars for cosmic feel (reference style)
+    for (let i = 0; i < 80; i++) {
+      const sx = Phaser.Math.Between(20, width - 20);
+      const sy = Phaser.Math.Between(20, height - 20);
+      const star = this.add.circle(sx, sy, Phaser.Math.FloatBetween(0.6, 1.4), 0xffffff, Phaser.Math.FloatBetween(0.4, 0.9));
+      if (Math.random() > 0.7) {
+        // subtle twinkle
+        this.tweens.add({ targets: star, alpha: 0.2, duration: 1200 + Math.random() * 800, yoyo: true, repeat: -1 });
+      }
+    }
+    // A few distant colored orbs/nebula dots
+    [0xff69b4, 0x00ced1, 0xda70d6].forEach((c, idx) => {
+      this.add.circle(120 + idx * 280, 80 + idx * 40, 3, c, 0.25);
+    });
 
-    // === LEFT SIDEBAR: CONNECTED PLAYERS ===
-    const leftX = 130;
-    const sidebarWidth = 220;
-    const sidebarTop = 120;
-    const sidebarHeight = 380;
-
-    // Sidebar panel background
-    this.add.rectangle(leftX, sidebarTop + sidebarHeight / 2, sidebarWidth, sidebarHeight, 0x111122).setStrokeStyle(2, 0x4a90e2);
-
-    // Title
-    this.add.text(leftX, sidebarTop - 25, 'CONNECTED PLAYERS', {
+    // === HEADER ===
+    this.add.text(width / 2, 28, 'ORB CHASER', {
+      fontSize: '42px',
+      fill: '#4a90e2',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    // Neon glow layers for title
+    this.add.text(width / 2, 28, 'ORB CHASER', {
+      fontSize: '42px',
+      fill: '#4a90e2',
+      fontStyle: 'bold',
+      alpha: 0.3
+    }).setOrigin(0.5).setScale(1.06);
+    this.add.text(width / 2, 55, 'MULTIPLAYER LOBBY  •  7/10 PLAYERS', {
       fontSize: '14px',
+      fill: '#a0c4ff'
+    }).setOrigin(0.5);
+
+    // === LEFT SIDEBAR: CONNECTED PLAYERS (avatar style) ===
+    const leftX = 135;
+    const sidebarWidth = 230;
+    const sidebarTop = 95;
+    const sidebarHeight = 310;
+
+    this.add.rectangle(leftX, sidebarTop + sidebarHeight / 2, sidebarWidth, sidebarHeight, 0x0d0d1f).setStrokeStyle(2, 0x4a90e2);
+
+    this.add.text(leftX, sidebarTop - 18, 'CONNECTED PLAYERS', {
+      fontSize: '13px',
       fill: '#4a90e2',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    // Load player data
+    // Sample players matching reference vibe (including self)
     this.playerLevel = parseInt(localStorage.getItem('playerLevel') || '1');
     const playerXP = parseInt(localStorage.getItem('playerXP') || '0');
-    const playerName = localStorage.getItem('playerName') || 'Player';
+    const playerName = localStorage.getItem('playerName') || 'You';
     const unlockedSkins = JSON.parse(localStorage.getItem('unlockedSkins') || '["⚡"]');
     const currentSkin = unlockedSkins[unlockedSkins.length - 1] || '⚡';
 
-    // Self entry (first and only for now)
-    const entryY = sidebarTop + 30;
-    this.add.text(leftX - 70, entryY, currentSkin, { fontSize: '22px' }).setOrigin(0.5);
-    this.add.text(leftX + 10, entryY - 5, playerName, {
-      fontSize: '15px',
-      fill: '#fff',
-      fontStyle: 'bold'
-    }).setOrigin(0, 0.5);
-    this.add.text(leftX + 10, entryY + 15, `Lvl ${this.playerLevel}  •  ${playerXP} XP`, {
-      fontSize: '11px',
-      fill: '#a0c4ff'
-    }).setOrigin(0, 0.5);
+    const samplePlayers = [
+      { name: playerName, skin: currentSkin, level: this.playerLevel, xp: playerXP, ready: true, isSelf: true },
+      { name: 'NeonNinja', skin: '🥷', level: 8, xp: 420, ready: true },
+      { name: 'OrbWhisper', skin: '🌟', level: 6, xp: 310, ready: true },
+      { name: 'CosmicDrift', skin: '☄️', level: 5, xp: 240, ready: false },
+      { name: 'PixelProwler', skin: '👾', level: 9, xp: 580, ready: true },
+      { name: 'VoidRunner42', skin: '🚀', level: 4, xp: 180, ready: false },
+      { name: 'StarChaser', skin: '🌈', level: 7, xp: 390, ready: true }
+    ];
 
-    // Placeholder status line
-    this.add.text(leftX, entryY + 45, 'READY', {
-      fontSize: '11px',
+    samplePlayers.forEach((p, i) => {
+      const y = sidebarTop + 22 + i * 38;
+      // Avatar circle
+      const avatarColor = p.isSelf ? 0x3a7bd5 : (p.ready ? 0x2a5a3c : 0x3a3a4a);
+      this.add.circle(leftX - 72, y, 14, avatarColor).setStrokeStyle(1, 0x4a90e2);
+      this.add.text(leftX - 72, y, p.skin, { fontSize: '16px' }).setOrigin(0.5);
+      // Name + level
+      this.add.text(leftX - 48, y - 6, p.name, {
+        fontSize: '13px',
+        fill: p.isSelf ? '#4ade80' : '#fff',
+        fontStyle: p.isSelf ? 'bold' : 'normal'
+      }).setOrigin(0, 0.5);
+      this.add.text(leftX - 48, y + 9, `Lvl ${p.level}  •  ${p.xp} XP`, {
+        fontSize: '10px',
+        fill: '#888'
+      }).setOrigin(0, 0.5);
+      // Ready badge
+      const statusColor = p.ready ? '#4ade80' : '#f59e0b';
+      this.add.text(leftX + 78, y, p.ready ? 'READY' : 'PREP', {
+        fontSize: '10px',
+        fill: statusColor,
+        fontStyle: 'bold'
+      }).setOrigin(0.5);
+    });
+
+    // === CENTER: ARENA PREVIEW (reference style) ===
+    const centerX = width / 2;
+    const previewY = 195;
+    const previewW = 380;
+    const previewH = 260;
+
+    // Neon frame for arena preview (like the glowing border in reference)
+    this.add.rectangle(centerX, previewY, previewW + 12, previewH + 12, 0x0a0a1a).setStrokeStyle(3, 0x00f0ff);
+    this.add.rectangle(centerX, previewY, previewW, previewH, 0x0f0f22).setStrokeStyle(2, 0x4a90e2);
+
+    // Mini arena floor
+    this.add.rectangle(centerX, previewY, previewW - 20, previewH - 20, 0x1a1a3a);
+
+    // Neon inner border
+    this.add.rectangle(centerX - 150, previewY - 90, 8, 180, 0x00f0ff);
+    this.add.rectangle(centerX + 150, previewY - 90, 8, 180, 0x00f0ff);
+    this.add.rectangle(centerX, previewY - 105, 300, 8, 0x00f0ff);
+    this.add.rectangle(centerX, previewY + 105, 300, 8, 0x00f0ff);
+
+    // Glowing orbs inside preview (reference has several colorful ones)
+    const previewOrbs = [
+      { x: centerX - 80, y: previewY - 40, c: 0x00ffff },
+      { x: centerX + 60, y: previewY - 55, c: 0xff00aa },
+      { x: centerX + 20, y: previewY + 30, c: 0x00ff88 },
+      { x: centerX - 40, y: previewY + 50, c: 0xffaa00 }
+    ];
+    previewOrbs.forEach(o => {
+      this.add.circle(o.x, o.y, 18, o.c, 0.15);
+      this.add.circle(o.x, o.y, 11, o.c, 0.45);
+      this.add.circle(o.x, o.y, 5, 0xffffff, 0.95);
+    });
+
+    // Sample player emojis positioned like the reference screenshot
+    const previewPlayers = [
+      { x: centerX - 60, y: previewY - 10, e: '🥷' },
+      { x: centerX + 30, y: previewY - 20, e: '🌟' },
+      { x: centerX - 20, y: previewY + 35, e: '👾' },
+      { x: centerX + 70, y: previewY + 20, e: '🚀' }
+    ];
+    previewPlayers.forEach(p => {
+      this.add.text(p.x, p.y, p.e, { fontSize: '20px' }).setOrigin(0.5);
+    });
+
+    this.add.text(centerX, previewY - 115, 'NEON NEXUS  •  ARENA 1', {
+      fontSize: '12px',
       fill: '#4ade80'
     }).setOrigin(0.5);
 
-    // === CENTER: LOGO + ACTIONS ===
-    const centerX = width / 2;
-
-    // Logo
-    this.add.text(centerX, 80, 'ORB CHASER', {
-      fontSize: '52px',
-      fill: '#4a90e2',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
-
-    this.add.text(centerX, 115, 'MULTIPLAYER 2D ARENA', {
-      fontSize: '16px',
-      fill: '#a0c4ff'
-    }).setOrigin(0.5);
-
-    // Player level header
-    this.add.text(centerX, 155, `Level ${this.playerLevel}  •  ${playerXP} XP`, {
-      fontSize: '16px',
-      fill: '#ffd700'
-    }).setOrigin(0.5);
-
-    // Quick Match button (prominent)
-    const btnY = 210;
-    const quickBtn = this.add.rectangle(centerX, btnY, 280, 52, 0x1a5a3c).setInteractive();
-    this.add.text(centerX, btnY, 'QUICK MATCH (Arena 1)', {
-      fontSize: '20px',
+    // Quick action buttons under preview
+    const btnY = previewY + 145;
+    const quickBtn = this.add.rectangle(centerX, btnY, 260, 42, 0x1a5a3c).setInteractive();
+    this.add.text(centerX, btnY, '⚡ QUICK MATCH', {
+      fontSize: '18px',
       fill: '#fff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
-
     quickBtn.on('pointerdown', () => {
       const roomCode = 'QUICK-' + Date.now().toString().slice(-5);
       const pName = localStorage.getItem('playerName') || 'Player';
@@ -95,14 +167,9 @@ export default class LobbyScene extends Phaser.Scene {
     quickBtn.on('pointerover', () => quickBtn.setFillStyle(0x2a7a4c));
     quickBtn.on('pointerout', () => quickBtn.setFillStyle(0x1a5a3c));
 
-    // Create / Join row
-    const rowY = btnY + 70;
-    const createBtn = this.add.rectangle(centerX - 110, rowY, 200, 44, 0x1a3a5c).setInteractive();
-    this.add.text(centerX - 110, rowY, 'CREATE ROOM', {
-      fontSize: '17px',
-      fill: '#fff'
-    }).setOrigin(0.5);
-
+    const rowY = btnY + 52;
+    const createBtn = this.add.rectangle(centerX - 95, rowY, 170, 36, 0x1a3a5c).setInteractive();
+    this.add.text(centerX - 95, rowY, 'CREATE ROOM', { fontSize: '15px', fill: '#fff' }).setOrigin(0.5);
     createBtn.on('pointerdown', () => {
       const roomCode = 'ROOM-' + Date.now().toString().slice(-4);
       const pName = localStorage.getItem('playerName') || 'Player';
@@ -111,84 +178,143 @@ export default class LobbyScene extends Phaser.Scene {
     createBtn.on('pointerover', () => createBtn.setFillStyle(0x2a5a8c));
     createBtn.on('pointerout', () => createBtn.setFillStyle(0x1a3a5c));
 
-    const joinBtn = this.add.rectangle(centerX + 110, rowY, 200, 44, 0x1a3a5c).setInteractive();
-    this.add.text(centerX + 110, rowY, 'JOIN ROOM', {
-      fontSize: '17px',
-      fill: '#fff'
-    }).setOrigin(0.5);
-
+    const joinBtn = this.add.rectangle(centerX + 95, rowY, 170, 36, 0x1a3a5c).setInteractive();
+    this.add.text(centerX + 95, rowY, 'JOIN ROOM', { fontSize: '15px', fill: '#fff' }).setOrigin(0.5);
     joinBtn.on('pointerdown', () => this.enterJoinMode());
     joinBtn.on('pointerover', () => joinBtn.setFillStyle(0x2a5a8c));
     joinBtn.on('pointerout', () => joinBtn.setFillStyle(0x1a3a5c));
 
-    // Arena select section (styled as preview area)
-    const arenaY = rowY + 80;
-    this.add.rectangle(centerX, arenaY + 20, 520, 90, 0x0f0f1f).setStrokeStyle(1, 0x4a90e2);
+    // === RIGHT SIDEBAR: MATCH INFO (reference exact) ===
+    const rightX = width - 135;
+    const rightWidth = 230;
 
-    this.add.text(centerX, arenaY - 15, 'ARENAS (Level Gated)', {
+    this.add.rectangle(rightX, sidebarTop + sidebarHeight / 2, rightWidth, sidebarHeight, 0x0d0d1f).setStrokeStyle(2, 0x4a90e2);
+
+    this.add.text(rightX, sidebarTop - 18, 'MATCH INFO', {
       fontSize: '13px',
-      fill: '#888'
-    }).setOrigin(0.5);
-
-    // Arena 1
-    const a1 = this.add.rectangle(centerX - 160, arenaY + 25, 95, 40, 0x2a5a3c).setInteractive();
-    this.add.text(centerX - 160, arenaY + 25, 'Arena 1', { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
-    a1.on('pointerdown', () => this.startArena(1));
-
-    // Arena 2
-    const a2Color = this.playerLevel >= 4 ? 0x2a5a3c : 0x333333;
-    const a2 = this.add.rectangle(centerX, arenaY + 25, 95, 40, a2Color).setInteractive();
-    this.add.text(centerX, arenaY + 25, 'Arena 2', { fontSize: '14px', fill: this.playerLevel >= 4 ? '#fff' : '#666' }).setOrigin(0.5);
-    if (this.playerLevel >= 4) {
-      a2.on('pointerdown', () => this.startArena(2));
-    }
-
-    // Arena 3
-    const a3Color = this.playerLevel >= 7 ? 0x2a5a3c : 0x333333;
-    const a3 = this.add.rectangle(centerX + 160, arenaY + 25, 95, 40, a3Color).setInteractive();
-    this.add.text(centerX + 160, arenaY + 25, 'Arena 3', { fontSize: '14px', fill: this.playerLevel >= 7 ? '#fff' : '#666' }).setOrigin(0.5);
-    if (this.playerLevel >= 7) {
-      a3.on('pointerdown', () => this.startArena(3));
-    }
-
-    // Footer
-    this.add.text(centerX, height - 35, 'WASD/Arrows Move  •  SPACE Dash  •  Collect Orbs  •  Dodge Hazards', {
-      fontSize: '12px',
-      fill: '#666'
-    }).setOrigin(0.5);
-
-    // === RIGHT SIDEBAR: MATCH INFO ===
-    const rightX = width - 130;
-    const rightWidth = 220;
-
-    this.add.rectangle(rightX, sidebarTop + sidebarHeight / 2, rightWidth, sidebarHeight, 0x111122).setStrokeStyle(2, 0x4a90e2);
-
-    this.add.text(rightX, sidebarTop - 25, 'MATCH INFO', {
-      fontSize: '14px',
       fill: '#4a90e2',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    // Match details (reflect current defaults)
-    const infoStartY = sidebarTop + 30;
-    const lineH = 28;
+    const infoStartY = sidebarTop + 22;
+    const lineH = 26;
 
-    this.add.text(rightX - 70, infoStartY, 'Mode', { fontSize: '12px', fill: '#888' }).setOrigin(0, 0.5);
-    this.add.text(rightX + 30, infoStartY, 'Classic Orb Chase', { fontSize: '13px', fill: '#fff' }).setOrigin(0, 0.5);
+    const infoItems = [
+      { label: 'Mode', value: 'Classic Orb Chase' },
+      { label: 'Arena', value: 'Neon Nexus' },
+      { label: 'Round Time', value: '4:00' },
+      { label: 'Power-Ups', value: 'ON' },
+      { label: 'Players', value: '7 / 10' }
+    ];
+    infoItems.forEach((item, idx) => {
+      const y = infoStartY + idx * lineH;
+      this.add.text(rightX - 75, y, item.label, { fontSize: '12px', fill: '#888' }).setOrigin(0, 0.5);
+      const valColor = item.label === 'Players' ? '#4ade80' : '#fff';
+      this.add.text(rightX + 35, y, item.value, { fontSize: '13px', fill: valColor }).setOrigin(0, 0.5);
+    });
 
-    this.add.text(rightX - 70, infoStartY + lineH, 'Arena', { fontSize: '12px', fill: '#888' }).setOrigin(0, 0.5);
-    this.add.text(rightX + 30, infoStartY + lineH, 'Arena 1 (Default)', { fontSize: '13px', fill: '#fff' }).setOrigin(0, 0.5);
-
-    this.add.text(rightX - 70, infoStartY + lineH * 2, 'Round Time', { fontSize: '12px', fill: '#888' }).setOrigin(0, 0.5);
-    this.add.text(rightX + 30, infoStartY + lineH * 2, '3:00', { fontSize: '13px', fill: '#fff' }).setOrigin(0, 0.5);
-
-    this.add.text(rightX - 70, infoStartY + lineH * 3, 'Players', { fontSize: '12px', fill: '#888' }).setOrigin(0, 0.5);
-    this.add.text(rightX + 30, infoStartY + lineH * 3, '1 / 10', { fontSize: '13px', fill: '#4ade80' }).setOrigin(0, 0.5);
-
-    this.add.text(rightX, infoStartY + lineH * 4.5, 'Select arena above', {
-      fontSize: '11px',
+    // Change Settings button (disabled look for non-host demo)
+    const settingsBtn = this.add.rectangle(rightX, infoStartY + 5 * lineH + 10, 160, 30, 0x2a2a3a).setInteractive();
+    this.add.text(rightX, infoStartY + 5 * lineH + 10, 'Change Settings', {
+      fontSize: '12px',
       fill: '#666'
     }).setOrigin(0.5);
+    settingsBtn.on('pointerover', () => settingsBtn.setFillStyle(0x3a3a4a));
+    settingsBtn.on('pointerout', () => settingsBtn.setFillStyle(0x2a2a3a));
+    // Note for non-host
+    this.add.text(rightX, infoStartY + 5 * lineH + 38, '(Host only)', {
+      fontSize: '10px',
+      fill: '#555'
+    }).setOrigin(0.5);
+
+    // === BOTTOM: CHAT + READY UP (reference layout) ===
+    const chatY = height - 95;
+    const chatPanelX = 280;
+
+    // Chat panel background
+    this.add.rectangle(chatPanelX, chatY, 420, 70, 0x0d0d1f).setStrokeStyle(1, 0x4a90e2);
+
+    // Sample chat messages (reference style)
+    this.add.text(chatPanelX - 195, chatY - 22, 'NeonNinja: Ready to chase some orbs 😎', {
+      fontSize: '11px', fill: '#a0c4ff'
+    }).setOrigin(0, 0.5);
+    this.add.text(chatPanelX - 195, chatY - 6, 'OrbWhisper: Anyone want to team up?', {
+      fontSize: '11px', fill: '#a0c4ff'
+    }).setOrigin(0, 0.5);
+    this.add.text(chatPanelX - 195, chatY + 10, 'PixelProwler: This map is so fun lol', {
+      fontSize: '11px', fill: '#a0c4ff'
+    }).setOrigin(0, 0.5);
+
+    // Chat input
+    this.chatInputText = this.add.text(chatPanelX - 195, chatY + 28, 'Type a message...', {
+      fontSize: '11px', fill: '#666', fontStyle: 'italic'
+    }).setOrigin(0, 0.5);
+    this.chatInputActive = false;
+
+    // Send button
+    const sendBtn = this.add.rectangle(chatPanelX + 175, chatY + 28, 50, 22, 0x1a3a5c).setInteractive();
+    this.add.text(chatPanelX + 175, chatY + 28, 'Send', { fontSize: '11px', fill: '#fff' }).setOrigin(0.5);
+    sendBtn.on('pointerdown', () => this.sendChatMessage());
+
+    // READY UP button (prominent, reference green)
+    const readyBtn = this.add.rectangle(width - 135, chatY + 5, 170, 48, 0x16a34a).setInteractive();
+    this.add.text(width - 135, chatY + 5, '🚀 READY UP', {
+      fontSize: '18px',
+      fill: '#fff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    readyBtn.on('pointerdown', () => {
+      readyBtn.setFillStyle(0x15803d);
+      this.add.text(width - 135, chatY + 32, 'Waiting for players...', {
+        fontSize: '11px', fill: '#4ade80'
+      }).setOrigin(0.5);
+      // After short delay, start the game (demo)
+      this.time.delayedCall(900, () => {
+        const roomCode = 'LOBBY-' + Date.now().toString().slice(-5);
+        const pName = localStorage.getItem('playerName') || 'Player';
+        this.scene.start('GameScene', { roomCode, isHost: true, arenaLevel: 1, playerName: pName });
+      });
+    });
+    readyBtn.on('pointerover', () => readyBtn.setFillStyle(0x22c55e));
+    readyBtn.on('pointerout', () => readyBtn.setFillStyle(0x16a34a));
+
+    // Footer controls hint
+    this.add.text(width / 2, height - 22, 'WASD/Arrows Move  •  SPACE Dash  •  Collect Orbs  •  Dodge Hazards', {
+      fontSize: '11px',
+      fill: '#555'
+    }).setOrigin(0.5);
+
+    // Keyboard support for chat (simple)
+    this.input.keyboard.on('keydown', (event) => {
+      if (this.chatInputActive) {
+        if (event.key === 'Enter') {
+          this.sendChatMessage();
+        } else if (event.key === 'Backspace') {
+          this.chatInputText.setText(this.chatInputText.text.slice(0, -1) || 'Type a message...');
+        } else if (event.key.length === 1) {
+          const current = this.chatInputText.text === 'Type a message...' ? '' : this.chatInputText.text;
+          this.chatInputText.setText(current + event.key);
+        }
+      } else if (event.key.toLowerCase() === 'c') {
+        this.chatInputActive = true;
+        this.chatInputText.setText('');
+        this.chatInputText.setStyle({ fill: '#fff', fontStyle: 'normal' });
+      }
+    });
+  }
+
+  sendChatMessage() {
+    if (!this.chatInputText || this.chatInputText.text === 'Type a message...' || this.chatInputText.text.trim() === '') return;
+    // For demo: just clear and show "sent"
+    const sentMsg = this.chatInputText.text;
+    this.chatInputText.setText('Message sent!');
+    this.chatInputActive = false;
+    this.time.delayedCall(1200, () => {
+      if (this.chatInputText) {
+        this.chatInputText.setText('Type a message...');
+        this.chatInputText.setStyle({ fill: '#666', fontStyle: 'italic' });
+      }
+    });
   }
 
   enterJoinMode() {
