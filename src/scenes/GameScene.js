@@ -42,7 +42,7 @@ export default class GameScene extends Phaser.Scene {
     this.hazardBody.body.setCircle(5);
     this.hazardBody.rotationSpeed = 0.02 * this.arenaLevel;
 
-    this.add.text(width/2, 25, `OR B C H A S E  |  Arena ${this.arenaLevel}  |  Room: ${this.roomCode}`, {
+    this.add.text(width/2, 25, `ORB C H A S E  |  Arena ${this.arenaLevel}  |  Room: ${this.roomCode}`, {
       fontSize: '18px',
       fill: '#4a90e2'
     }).setOrigin(0.5);
