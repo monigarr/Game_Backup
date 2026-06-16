@@ -11,8 +11,15 @@ export default class GameScene extends Phaser.Scene {
     this.isHost = data.isHost || false;
     this.playerId = 'p' + Date.now();
     this.arenaLevel = data.arenaLevel || 1;
+    this.playerName = data.playerName || 'Player';
     this.otherPlayers = new Map();
     this.otherPlayerEmojis = new Map();
+
+    // Load progression from localStorage (inline until PlayerProgress helper)
+    this.playerLevel = parseInt(localStorage.getItem('playerLevel') || '1');
+    this.playerXP = parseInt(localStorage.getItem('playerXP') || '0');
+    this.unlockedSkins = JSON.parse(localStorage.getItem('unlockedSkins') || '["⚡"]');
+    this.dashCooldownMs = this.playerLevel >= 5 ? 1200 : 1500; // unlock reduction at lvl 5
   }
 
   create() {
@@ -42,10 +49,18 @@ export default class GameScene extends Phaser.Scene {
 
     this.scoreText = this.add.text(40, 55, 'SCORE: 0', { fontSize: '20px', fill: '#fff', fontStyle: 'bold' });
     this.timerText = this.add.text(width/2, 55, 'TIME: 3:00', { fontSize: '20px', fill: '#ffd700', fontStyle: 'bold' }).setOrigin(0.5);
-    this.levelText = this.add.text(width - 140, 55, 'LVL 1', { fontSize: '18px', fill: '#a0c4ff' });
+    this.levelText = this.add.text(width - 140, 55, `LVL ${this.playerLevel}`, { fontSize: '18px', fill: '#a0c4ff' });
+
+    // XP bar (simple rect + text)
+    this.xpBarBg = this.add.rectangle(width - 140, 75, 80, 8, 0x333355).setOrigin(0.5, 0.5);
+    const xpPercent = Math.min((this.playerXP % 100) / 100, 1);
+    this.xpBarFill = this.add.rectangle(width - 140 - 40 + (xpPercent * 40), 75, 80 * xpPercent, 8, 0x4a90e2).setOrigin(0, 0.5);
+    this.xpText = this.add.text(width - 140, 88, `${this.playerXP % 100}/100 XP`, { fontSize: '11px', fill: '#888' }).setOrigin(0.5);
 
     const playerEmojis = ['⚡','🔥','🌟','💎','🚀','👾','🦄','🌈','🐉','🎮'];
-    const getEmoji = (id) => playerEmojis[id.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%playerEmojis.length];
+    // Use unlocked skin or level-based
+    const currentSkin = this.unlockedSkins[this.unlockedSkins.length - 1] || playerEmojis[Math.min(this.playerLevel - 1, 9)];
+    const getEmoji = (id) => currentSkin;
     this.orbColors = [0xff69b4,0x00ced1,0xda70d6,0x32cd32,0xffa500,0x4169e1,0xff1493,0x00fa9a];
 
     this.player = this.physics.add.image(width/2, height/2, null);
@@ -53,7 +68,7 @@ export default class GameScene extends Phaser.Scene {
     this.player.setAlpha(0);
     this.player.body.setCollideWorldBounds(true);
     this.player.body.setCircle(16);
-    this.playerEmoji = this.add.text(width/2, height/2, getEmoji(this.playerId), { fontSize: '22px' }).setOrigin(0.5).setDepth(10);
+    this.playerEmoji = this.add.text(width/2, height/2, currentSkin, { fontSize: '22px' }).setOrigin(0.5).setDepth(10);
 
     this.orbs = this.physics.add.group();
     const orbPositions = this.arenaLevel === 1 ? 
@@ -399,7 +414,38 @@ export default class GameScene extends Phaser.Scene {
       this.stopAmbientMusic();
       if (this.socketManager) this.socketManager.disconnect();
       const finalScore = parseInt(this.scoreText.text.split(': ')[1]);
-      this.scene.start('ResultsScene', { score: finalScore, xpGained: Math.floor(finalScore / 2) + 25 });
+      const xpGained = Math.floor(finalScore / 2) + 25 + (this.arenaLevel * 10);
+
+      // Apply progression
+      let newXP = this.playerXP + xpGained;
+      let newLevel = this.playerLevel;
+      const leveledUp = [];
+      while (newXP >= newLevel * 100 && newLevel < 10) {
+        newXP -= newLevel * 100;
+        newLevel++;
+        leveledUp.push(newLevel);
+      }
+
+      // Unlock skins at certain levels (3 skins + cooldown already handled)
+      const newSkins = [...this.unlockedSkins];
+      if (newLevel >= 3 && !newSkins.includes('🔥')) newSkins.push('🔥');
+      if (newLevel >= 6 && !newSkins.includes('🌟')) newSkins.push('🌟');
+      if (newLevel >= 9 && !newSkins.includes('💎')) newSkins.push('💎');
+
+      localStorage.setItem('playerLevel', newLevel);
+      localStorage.setItem('playerXP', newXP);
+      localStorage.setItem('unlockedSkins', JSON.stringify(newSkins));
+
+      const unlockText = leveledUp.length > 0 ? `Level Up! Unlocked: ${newSkins.slice(-1)}` : '';
+
+      this.scene.start('ResultsScene', {
+        score: finalScore,
+        xpGained,
+        newLevel,
+        newXP,
+        leveledUp: leveledUp.length > 0,
+        unlockText
+      });
     }
   }
 
@@ -425,7 +471,7 @@ export default class GameScene extends Phaser.Scene {
       this.socketManager.sendMove(this.roomCode, this.player.x, this.player.y, vx, vy);
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.wasd.SPACE) && time > this.lastDashTime + 1500) {
+    if (Phaser.Input.Keyboard.JustDown(this.wasd.SPACE) && time > this.lastDashTime + this.dashCooldownMs) {
       this.lastDashTime = time;
       let dx = vx || this.lastDirection.x;
       let dy = vy || this.lastDirection.y;
