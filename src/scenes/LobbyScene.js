@@ -12,63 +12,108 @@ export default class LobbyScene extends Phaser.Scene {
   create() {
     const { width, height } = this.cameras.main;
 
+    // Full dark background
     this.add.rectangle(width / 2, height / 2, width, height, 0x0a0a1a);
 
-    this.add.text(width / 2, height / 2 - 160, 'ORBCHASE', {
-      fontSize: '64px',
+    // === LEFT SIDEBAR: CONNECTED PLAYERS ===
+    const leftX = 130;
+    const sidebarWidth = 220;
+    const sidebarTop = 120;
+    const sidebarHeight = 380;
+
+    // Sidebar panel background
+    this.add.rectangle(leftX, sidebarTop + sidebarHeight / 2, sidebarWidth, sidebarHeight, 0x111122).setStrokeStyle(2, 0x4a90e2);
+
+    // Title
+    this.add.text(leftX, sidebarTop - 25, 'CONNECTED PLAYERS', {
+      fontSize: '14px',
       fill: '#4a90e2',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, height / 2 - 100, 'Multiplayer 2D Arena', {
-      fontSize: '24px',
+    // Load player data
+    this.playerLevel = parseInt(localStorage.getItem('playerLevel') || '1');
+    const playerXP = parseInt(localStorage.getItem('playerXP') || '0');
+    const playerName = localStorage.getItem('playerName') || 'Player';
+    const unlockedSkins = JSON.parse(localStorage.getItem('unlockedSkins') || '["⚡"]');
+    const currentSkin = unlockedSkins[unlockedSkins.length - 1] || '⚡';
+
+    // Self entry (first and only for now)
+    const entryY = sidebarTop + 30;
+    this.add.text(leftX - 70, entryY, currentSkin, { fontSize: '22px' }).setOrigin(0.5);
+    this.add.text(leftX + 10, entryY - 5, playerName, {
+      fontSize: '15px',
+      fill: '#fff',
+      fontStyle: 'bold'
+    }).setOrigin(0, 0.5);
+    this.add.text(leftX + 10, entryY + 15, `Lvl ${this.playerLevel}  •  ${playerXP} XP`, {
+      fontSize: '11px',
+      fill: '#a0c4ff'
+    }).setOrigin(0, 0.5);
+
+    // Placeholder status line
+    this.add.text(leftX, entryY + 45, 'READY', {
+      fontSize: '11px',
+      fill: '#4ade80'
+    }).setOrigin(0.5);
+
+    // === CENTER: LOGO + ACTIONS ===
+    const centerX = width / 2;
+
+    // Logo
+    this.add.text(centerX, 80, 'ORB CHASER', {
+      fontSize: '52px',
+      fill: '#4a90e2',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    this.add.text(centerX, 115, 'MULTIPLAYER 2D ARENA', {
+      fontSize: '16px',
       fill: '#a0c4ff'
     }).setOrigin(0.5);
 
-    this.playerLevel = parseInt(localStorage.getItem('playerLevel') || '1');
-    const playerXP = parseInt(localStorage.getItem('playerXP') || '0');
-    this.add.text(width / 2, height / 2 - 60, `Level ${this.playerLevel}  •  ${playerXP} XP`, {
-      fontSize: '18px',
+    // Player level header
+    this.add.text(centerX, 155, `Level ${this.playerLevel}  •  ${playerXP} XP`, {
+      fontSize: '16px',
       fill: '#ffd700'
     }).setOrigin(0.5);
 
-    // Main action buttons - clean row
-    const btnY = height / 2 + 10;
-
-    // QUICK MATCH (original simple flow)
-    const quickBtn = this.add.rectangle(width / 2, btnY, 260, 50, 0x1a5a3c).setInteractive();
-    this.add.text(width / 2, btnY, 'QUICK MATCH (Arena 1)', {
+    // Quick Match button (prominent)
+    const btnY = 210;
+    const quickBtn = this.add.rectangle(centerX, btnY, 280, 52, 0x1a5a3c).setInteractive();
+    this.add.text(centerX, btnY, 'QUICK MATCH (Arena 1)', {
       fontSize: '20px',
-      fill: '#fff'
+      fill: '#fff',
+      fontStyle: 'bold'
     }).setOrigin(0.5);
 
     quickBtn.on('pointerdown', () => {
       const roomCode = 'QUICK-' + Date.now().toString().slice(-5);
-      const playerName = localStorage.getItem('playerName') || 'Player';
-      this.scene.start('GameScene', { roomCode, isHost: true, arenaLevel: 1, playerName });
+      const pName = localStorage.getItem('playerName') || 'Player';
+      this.scene.start('GameScene', { roomCode, isHost: true, arenaLevel: 1, playerName: pName });
     });
     quickBtn.on('pointerover', () => quickBtn.setFillStyle(0x2a7a4c));
     quickBtn.on('pointerout', () => quickBtn.setFillStyle(0x1a5a3c));
 
-    // CREATE ROOM
-    const createBtn = this.add.rectangle(width / 2 - 140, btnY + 70, 200, 45, 0x1a3a5c).setInteractive();
-    this.add.text(width / 2 - 140, btnY + 70, 'CREATE ROOM', {
-      fontSize: '18px',
+    // Create / Join row
+    const rowY = btnY + 70;
+    const createBtn = this.add.rectangle(centerX - 110, rowY, 200, 44, 0x1a3a5c).setInteractive();
+    this.add.text(centerX - 110, rowY, 'CREATE ROOM', {
+      fontSize: '17px',
       fill: '#fff'
     }).setOrigin(0.5);
 
     createBtn.on('pointerdown', () => {
       const roomCode = 'ROOM-' + Date.now().toString().slice(-4);
-      const playerName = localStorage.getItem('playerName') || 'Player';
-      this.scene.start('GameScene', { roomCode, isHost: true, arenaLevel: 1, playerName });
+      const pName = localStorage.getItem('playerName') || 'Player';
+      this.scene.start('GameScene', { roomCode, isHost: true, arenaLevel: 1, playerName: pName });
     });
     createBtn.on('pointerover', () => createBtn.setFillStyle(0x2a5a8c));
     createBtn.on('pointerout', () => createBtn.setFillStyle(0x1a3a5c));
 
-    // JOIN ROOM (enters code entry mode)
-    const joinBtn = this.add.rectangle(width / 2 + 140, btnY + 70, 200, 45, 0x1a3a5c).setInteractive();
-    this.add.text(width / 2 + 140, btnY + 70, 'JOIN ROOM', {
-      fontSize: '18px',
+    const joinBtn = this.add.rectangle(centerX + 110, rowY, 200, 44, 0x1a3a5c).setInteractive();
+    this.add.text(centerX + 110, rowY, 'JOIN ROOM', {
+      fontSize: '17px',
       fill: '#fff'
     }).setOrigin(0.5);
 
@@ -76,37 +121,72 @@ export default class LobbyScene extends Phaser.Scene {
     joinBtn.on('pointerover', () => joinBtn.setFillStyle(0x2a5a8c));
     joinBtn.on('pointerout', () => joinBtn.setFillStyle(0x1a3a5c));
 
-    // Arena select row (level gated)
-    const arenaY = height / 2 + 140;
-    this.add.text(width / 2, arenaY - 25, 'ARENAS (Level Gated)', {
-      fontSize: '14px',
+    // Arena select section (styled as preview area)
+    const arenaY = rowY + 80;
+    this.add.rectangle(centerX, arenaY + 20, 520, 90, 0x0f0f1f).setStrokeStyle(1, 0x4a90e2);
+
+    this.add.text(centerX, arenaY - 15, 'ARENAS (Level Gated)', {
+      fontSize: '13px',
       fill: '#888'
     }).setOrigin(0.5);
 
     // Arena 1
-    const a1 = this.add.rectangle(width / 2 - 150, arenaY + 15, 90, 38, 0x2a5a3c).setInteractive();
-    this.add.text(width / 2 - 150, arenaY + 15, 'Arena 1', { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
+    const a1 = this.add.rectangle(centerX - 160, arenaY + 25, 95, 40, 0x2a5a3c).setInteractive();
+    this.add.text(centerX - 160, arenaY + 25, 'Arena 1', { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
     a1.on('pointerdown', () => this.startArena(1));
 
     // Arena 2
     const a2Color = this.playerLevel >= 4 ? 0x2a5a3c : 0x333333;
-    const a2 = this.add.rectangle(width / 2, arenaY + 15, 90, 38, a2Color).setInteractive();
-    this.add.text(width / 2, arenaY + 15, 'Arena 2', { fontSize: '14px', fill: this.playerLevel >= 4 ? '#fff' : '#666' }).setOrigin(0.5);
+    const a2 = this.add.rectangle(centerX, arenaY + 25, 95, 40, a2Color).setInteractive();
+    this.add.text(centerX, arenaY + 25, 'Arena 2', { fontSize: '14px', fill: this.playerLevel >= 4 ? '#fff' : '#666' }).setOrigin(0.5);
     if (this.playerLevel >= 4) {
       a2.on('pointerdown', () => this.startArena(2));
     }
 
     // Arena 3
     const a3Color = this.playerLevel >= 7 ? 0x2a5a3c : 0x333333;
-    const a3 = this.add.rectangle(width / 2 + 150, arenaY + 15, 90, 38, a3Color).setInteractive();
-    this.add.text(width / 2 + 150, arenaY + 15, 'Arena 3', { fontSize: '14px', fill: this.playerLevel >= 7 ? '#fff' : '#666' }).setOrigin(0.5);
+    const a3 = this.add.rectangle(centerX + 160, arenaY + 25, 95, 40, a3Color).setInteractive();
+    this.add.text(centerX + 160, arenaY + 25, 'Arena 3', { fontSize: '14px', fill: this.playerLevel >= 7 ? '#fff' : '#666' }).setOrigin(0.5);
     if (this.playerLevel >= 7) {
       a3.on('pointerdown', () => this.startArena(3));
     }
 
     // Footer
-    this.add.text(width / 2, height - 35, 'WASD/Arrows Move  •  SPACE Dash  •  Collect Orbs  •  Dodge Hazards', {
-      fontSize: '13px',
+    this.add.text(centerX, height - 35, 'WASD/Arrows Move  •  SPACE Dash  •  Collect Orbs  •  Dodge Hazards', {
+      fontSize: '12px',
+      fill: '#666'
+    }).setOrigin(0.5);
+
+    // === RIGHT SIDEBAR: MATCH INFO ===
+    const rightX = width - 130;
+    const rightWidth = 220;
+
+    this.add.rectangle(rightX, sidebarTop + sidebarHeight / 2, rightWidth, sidebarHeight, 0x111122).setStrokeStyle(2, 0x4a90e2);
+
+    this.add.text(rightX, sidebarTop - 25, 'MATCH INFO', {
+      fontSize: '14px',
+      fill: '#4a90e2',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    // Match details (reflect current defaults)
+    const infoStartY = sidebarTop + 30;
+    const lineH = 28;
+
+    this.add.text(rightX - 70, infoStartY, 'Mode', { fontSize: '12px', fill: '#888' }).setOrigin(0, 0.5);
+    this.add.text(rightX + 30, infoStartY, 'Classic Orb Chase', { fontSize: '13px', fill: '#fff' }).setOrigin(0, 0.5);
+
+    this.add.text(rightX - 70, infoStartY + lineH, 'Arena', { fontSize: '12px', fill: '#888' }).setOrigin(0, 0.5);
+    this.add.text(rightX + 30, infoStartY + lineH, 'Arena 1 (Default)', { fontSize: '13px', fill: '#fff' }).setOrigin(0, 0.5);
+
+    this.add.text(rightX - 70, infoStartY + lineH * 2, 'Round Time', { fontSize: '12px', fill: '#888' }).setOrigin(0, 0.5);
+    this.add.text(rightX + 30, infoStartY + lineH * 2, '3:00', { fontSize: '13px', fill: '#fff' }).setOrigin(0, 0.5);
+
+    this.add.text(rightX - 70, infoStartY + lineH * 3, 'Players', { fontSize: '12px', fill: '#888' }).setOrigin(0, 0.5);
+    this.add.text(rightX + 30, infoStartY + lineH * 3, '1 / 10', { fontSize: '13px', fill: '#4ade80' }).setOrigin(0, 0.5);
+
+    this.add.text(rightX, infoStartY + lineH * 4.5, 'Select arena above', {
+      fontSize: '11px',
       fill: '#666'
     }).setOrigin(0.5);
   }
