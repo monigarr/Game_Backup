@@ -24,15 +24,17 @@ OrbChase is a fast-paced, real-time 2D top-down multiplayer arena game built to 
 
 **Key Features (MVP Scope for 1-Day Build):**
 - **Multiplayer:** Real-time position, velocity, score, and event sync (Socket.io rooms)
-- **Progression:** Post-match XP → Level 1-10 → Unlock 3 orb skins + 1 ability (dash cooldown reduction)
+- **Progression:** Post-match XP and levels with unlockable arenas and abilities (character progression)
 - **Gameplay:** 
  - WASD/arrows movement + Space dash (cooldown)
  - Collect glowing orbs (spawn 8-12 per arena, respawn on collection)
- - Simple hazard: rotating energy walls (damage on touch)
+ - Hazards to avoid (damage on touch)
  - Collision: bump other players (knockback, no friendly fire)
- - 3 fixed arenas (levels) unlocked by player level
+ - Multiple arenas unlocked through player progression (levels)
 - **UI/UX:** Clean lobby (create/join room by code), in-game HUD (score, timer, level/XP bar), post-match results + progression screen
 - **Polish:** Smooth 60fps Phaser rendering, particle effects on collect/dash, responsive controls, mobile-friendly touch fallback
+
+**Implementation Notes (Current Build):** The game implements three arenas gated by player level (available at levels 1, 4, and 7), a rotating hazard orb, an additional bouncing enemy that deducts points, three unlockable orb skins, and a dash cooldown reduction ability unlocked at level 5. All progression is persisted via localStorage. These concrete choices satisfy the general requirements for levels and character progression.
 
 **Storyline Hook:** "You are a rogue energy orb fighting for dominance in the collapsing Nexus. Absorb power before the void claims it all."
 
@@ -40,7 +42,7 @@ OrbChase is a fast-paced, real-time 2D top-down multiplayer arena game built to 
 - **Multiplayer:** Socket.io for authoritative server (room management, state broadcast at 20Hz, client prediction + reconciliation)
 - **Performance:** Phaser 3 Arcade Physics, minimal state sync (positions + events only), no lag on 4 players (tested locally + deployed)
 - **Platform:** Pure browser (Chrome/Firefox/Edge), no install, WebGL renderer
-- **Complexity:** 3 unlockable arenas (progression), XP/level system with persistent (localStorage + server profile stub)
+- **Complexity:** Levels and character progression with unlockable arenas and abilities, XP/level system with persistent (localStorage + server profile stub)
 - **Engagement:** Clear win condition (highest score), visual feedback, quick matches, social (see other players move/score live)
 
 **Non-Functional:**

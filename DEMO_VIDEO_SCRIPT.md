@@ -16,7 +16,7 @@
 - Narrate controls: "WASD to move, SPACE to dash with cooldown and trail. Collect golden orbs while dodging the rotating red hazard."
 - Highlight: Real-time positions of other players updating live, orb respawn, score pop, hazard damage flash.
 - End match → Results screen with XP bar and unlock text.
-- "Three arenas unlocked by level, persistent progress via localStorage."
+- "Multiple arenas unlocked through player progression, persistent progress via localStorage."
 
 ## 2:15 - 3:30 | Technical Walkthrough
 - Screen share code:

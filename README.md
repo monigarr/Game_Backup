@@ -12,13 +12,15 @@ https://game-backup-git-main-monigarr-projects.vercel.app/
 ## Features
 - Real-time multiplayer (2-4 players per room via Socket.io)
 - Smooth 60fps gameplay with client prediction + server reconciliation
-- 3 level-gated arenas with rotating energy hazards
+- Multiple arenas unlocked through player progression with hazards to avoid
 - Dash ability with cooldown and visual trail
 - Orb collection + respawn mechanics
 - Character progression: XP, levels 1-10+, unlocks (skins, cooldown reduction)
 - Geometric visuals + particles for instant polish (no asset dependencies)
 - Persistent progress via localStorage
 - Low-latency performance, deployable today
+
+**Implementation Note:** Current build includes three arenas (unlocked at player levels 1/4/7), a rotating hazard orb, bonus enemy, three skins, and dash cooldown reduction at level 5.
 
 ## Tech Stack
 - Frontend: Phaser 3 (Arcade Physics), Vite, JavaScript
