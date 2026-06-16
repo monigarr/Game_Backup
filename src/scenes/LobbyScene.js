@@ -116,12 +116,6 @@ export default class LobbyScene extends Phaser.Scene {
     // Mini arena floor
     this.add.rectangle(centerX, previewY, previewW - 20, previewH - 20, 0x1a1a3a);
 
-    // Neon inner border
-    this.add.rectangle(centerX - 150, previewY - 90, 8, 180, 0x00f0ff);
-    this.add.rectangle(centerX + 150, previewY - 90, 8, 180, 0x00f0ff);
-    this.add.rectangle(centerX, previewY - 105, 300, 8, 0x00f0ff);
-    this.add.rectangle(centerX, previewY + 105, 300, 8, 0x00f0ff);
-
     // Glowing orbs inside preview (reference has several colorful ones)
     const previewOrbs = [
       { x: centerX - 80, y: previewY - 40, c: 0x00ffff },
@@ -151,8 +145,8 @@ export default class LobbyScene extends Phaser.Scene {
       fill: '#4ade80'
     }).setOrigin(0.5);
 
-    // === AUTHENTIC GAMEPLAY BUTTONS (spaced under arena preview) ===
-    const btnY = previewY + 145;
+    // === AUTHENTIC GAMEPLAY BUTTONS (spaced under arena preview, below sidebar) ===
+    const btnY = previewY + 220;
     const btnWidth = 200;
     const btnHeight = 44;
     const gap = 40; // space between buttons
@@ -199,7 +193,7 @@ export default class LobbyScene extends Phaser.Scene {
     joinBtn.on('pointerout', () => joinBtn.setFillStyle(0x1a3a5c));
 
     // Footer controls hint (concise, relevant to working features)
-    this.add.text(width / 2, height - 28, 'WASD / Arrows Move  •  SPACE Dash  •  Collect Orbs  •  Dodge Hazards', {
+    this.add.text(width / 2, height - 28, 'WASD / Arrows Move  •  SPACE Dash  •  Collect Orbs', {
       fontSize: '13px',
       fill: '#888'
     }).setOrigin(0.5);
