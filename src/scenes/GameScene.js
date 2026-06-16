@@ -39,8 +39,6 @@ export default class GameScene extends Phaser.Scene {
     this.hazardBody.body.setImmovable(true);
     this.hazardBody.body.setCircle(5); // approx for thin bar, will rotate
 
-    this.physics.add.overlap(this.player, this.hazardBody, this.hitHazard, null, this);
-
     this.add.text(width/2, 25, `OR B C H A S E  |  Arena ${this.arenaLevel}  |  Room: ${this.roomCode}`, {
       fontSize: '18px',
       fill: '#4a90e2'
@@ -77,6 +75,9 @@ export default class GameScene extends Phaser.Scene {
 
     this.physics.add.collider(this.player, this.walls);
     this.physics.add.overlap(this.player, this.orbs, this.collectOrb, null, this);
+
+    // Hazard overlap (after player exists)
+    this.physics.add.overlap(this.player, this.hazardBody, this.hitHazard, null, this);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys('W,A,S,D,SPACE');
