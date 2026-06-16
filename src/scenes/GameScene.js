@@ -16,6 +16,7 @@ export default class GameScene extends Phaser.Scene {
     this.playerId = 'p' + Date.now();
     this.arenaLevel = data.arenaLevel || 1;
     this.otherPlayers = new Map();
+    this.otherPlayerEmojis = new Map();
   }
 
   create() {
@@ -47,28 +48,31 @@ export default class GameScene extends Phaser.Scene {
     this.timerText = this.add.text(width/2, 55, 'TIME: 3:00', { fontSize: '20px', fill: '#ffd700', fontStyle: 'bold' }).setOrigin(0.5);
     this.levelText = this.add.text(width - 140, 55, 'LVL 1', { fontSize: '18px', fill: '#a0c4ff' });
 
-    // Local player
+    const playerEmojis = ['⚡','🔥','🌟','💎','🚀','👾','🦄','🌈','🐉','🎮'];
+    const getEmoji = (id) => playerEmojis[id.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%playerEmojis.length];
+    this.orbColors = [0xff69b4,0x00ced1,0xda70d6,0x32cd32,0xffa500,0x4169e1,0xff1493,0x00fa9a];
+
     this.player = this.physics.add.image(width/2, height/2, null);
     this.player.setDisplaySize(32, 32);
-    this.player.setTint(0x00ff88);
+    this.player.setAlpha(0);
     this.player.body.setCollideWorldBounds(true);
     this.player.body.setCircle(16);
-    this.playerEmoji = this.add.text(width/2, height/2, '⚡', { fontSize: '22px' }).setOrigin(0.5);
+    this.playerEmoji = this.add.text(width/2, height/2, getEmoji(this.playerId), { fontSize: '22px' }).setOrigin(0.5);
 
-    // Orbs
     this.orbs = this.physics.add.group();
     const orbPositions = this.arenaLevel === 1 ? 
       [[150,180],[300,220],[450,160],[600,240],[750,190],[200,420],[400,480],[650,430]] :
       [[120,150],[280,200],[500,140],[720,180],[180,380],[380,450],[620,390],[780,420]];
     
     orbPositions.forEach((pos, i) => {
+      const color = this.orbColors[i % this.orbColors.length];
       const orb = this.physics.add.image(pos[0], pos[1], null);
       orb.setDisplaySize(20, 20);
-      orb.setTint(0xffd700);
+      orb.setTint(color);
       orb.body.setImmovable(true);
       orb.body.setCircle(10);
       orb.orbId = 'orb' + i;
-      this.add.rectangle(pos[0], pos[1], 26, 26, 0xffd700, 0.2).setOrigin(0.5);
+      this.add.rectangle(pos[0], pos[1], 26, 26, color, 0.2).setOrigin(0.5);
       this.orbs.add(orb);
     });
 
@@ -126,9 +130,11 @@ export default class GameScene extends Phaser.Scene {
       if (data.id === this.socketManager.socket.id) return;
       const other = this.physics.add.image(data.x || 300, data.y || 400, null);
       other.setDisplaySize(28, 28);
-      other.setTint(0xff8800);
+      other.setAlpha(0);
       other.body.setCircle(14);
       other.playerId = data.id;
+      const emoji = this.add.text(data.x || 300, data.y || 400, getEmoji(data.id), { fontSize: '20px' }).setOrigin(0.5);
+      this.otherPlayerEmojis.set(data.id, emoji);
       this.otherPlayers.set(data.id, other);
     };
     this.onPlayerMoved = (data) => {
@@ -137,6 +143,8 @@ export default class GameScene extends Phaser.Scene {
         // Smoother reconciliation with lerp + optional velocity
         other.x = Phaser.Math.Linear(other.x, data.x, 0.5);
         other.y = Phaser.Math.Linear(other.y, data.y, 0.5);
+        const emoji = this.otherPlayerEmojis.get(data.id);
+        if (emoji) emoji.setPosition(other.x, other.y);
         if (data.vx !== undefined && data.vy !== undefined) {
           other.setVelocity(data.vx * 0.6, data.vy * 0.6);
         }
@@ -166,16 +174,18 @@ export default class GameScene extends Phaser.Scene {
 
     this.time.delayedCall(2200, () => {
       if (orb.scene === undefined) {
+        const color = this.orbColors[Math.floor(Math.random() * this.orbColors.length)];
         const newOrb = this.physics.add.image(
           100 + Math.random() * (this.cameras.main.width - 200),
           120 + Math.random() * (this.cameras.main.height - 200),
           null
         );
         newOrb.setDisplaySize(20, 20);
-        newOrb.setTint(0xffd700);
+        newOrb.setTint(color);
         newOrb.body.setImmovable(true);
         newOrb.body.setCircle(10);
         newOrb.orbId = 'orb' + Date.now();
+        this.add.rectangle(newOrb.x, newOrb.y, 26, 26, color, 0.2).setOrigin(0.5);
         this.orbs.add(newOrb);
         this.physics.add.overlap(this.player, newOrb, this.collectOrb, null, this);
       }
