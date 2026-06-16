@@ -34,13 +34,21 @@ export default class GameScene extends Phaser.Scene {
     this.walls.create(50, height/2, null).setDisplaySize(10, height-80).setTint(0x4a90e2).refreshBody();
     this.walls.create(width-50, height/2, null).setDisplaySize(10, height-80).setTint(0x4a90e2).refreshBody();
 
-    // Hazard collider (thin rotating bar for real overlap detection) - visual removed, mechanic preserved
+    // Hazard / obstacle orb (distinct shape + consistent warning color, different from collectible orbs)
+    const hazardColor = 0xff3333; // consistent red hazard color
     this.hazardBody = this.physics.add.image(width/2, height/2, null);
-    this.hazardBody.setDisplaySize(240, 10);
-    this.hazardBody.setAlpha(0);
+    this.hazardBody.setDisplaySize(28, 28);
+    // Keep the physics body slightly transparent so the visual orb/X are the main cue
+    this.hazardBody.setAlpha(0.15);
     this.hazardBody.body.setImmovable(true);
-    this.hazardBody.body.setCircle(5);
-    this.hazardBody.rotationSpeed = 0.02 * this.arenaLevel;
+    this.hazardBody.body.setCircle(14);
+    this.hazardBody.rotationSpeed = 0.03 * this.arenaLevel;
+
+    // Visual hazard orb: solid red core + warning X shape (distinct from layered glowing collectible orbs)
+    this.hazardOrb = this.add.circle(width/2, height/2, 14, hazardColor, 0.95).setOrigin(0.5);
+    // X overlay for "obstacle" feel
+    this.hazardX1 = this.add.rectangle(width/2, height/2, 22, 4, 0xffffff, 0.9).setOrigin(0.5).setRotation(Math.PI / 4);
+    this.hazardX2 = this.add.rectangle(width/2, height/2, 22, 4, 0xffffff, 0.9).setOrigin(0.5).setRotation(-Math.PI / 4);
 
     this.add.text(width/2, 25, `ORB C H A S E  |  Arena ${this.arenaLevel}  |  Room: ${this.roomCode}`, {
       fontSize: '18px',
@@ -202,13 +210,27 @@ export default class GameScene extends Phaser.Scene {
   }
 
   collectOrb(player, orb) {
+    // Prevent double-collection
+    if (!orb.body || !orb.body.enable) return;
+    orb.body.enable = false;
+
     const orbId = orb.orbId;
-    orb.destroy();
     const currentScore = parseInt(this.scoreText.text.split(': ')[1]) + 15;
     this.scoreText.setText('SCORE: ' + currentScore);
     this.playOrbCollect();
-    
+
     if (this.socketManager) this.socketManager.sendCollect(this.roomCode, orbId);
+
+    // Visual feedback: scale up and fade out so player sees the orb was touched
+    this.tweens.add({
+      targets: orb,
+      scaleX: 2.8,
+      scaleY: 2.8,
+      alpha: 0,
+      duration: 160,
+      ease: 'Quad.easeOut',
+      onComplete: () => orb.destroy()
+    });
 
     this.time.delayedCall(2200, () => {
       if (orb.scene === undefined) {
@@ -493,6 +515,10 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.hazardBody) {
       this.hazardBody.rotation += this.hazardBody.rotationSpeed;
+      // Keep visual hazard orb + X centered on the physics body
+      if (this.hazardOrb) this.hazardOrb.setPosition(this.hazardBody.x, this.hazardBody.y);
+      if (this.hazardX1) this.hazardX1.setPosition(this.hazardBody.x, this.hazardBody.y).setRotation(this.hazardBody.rotation + Math.PI / 4);
+      if (this.hazardX2) this.hazardX2.setPosition(this.hazardBody.x, this.hazardBody.y).setRotation(this.hazardBody.rotation - Math.PI / 4);
     }
 
     // Occasional chaotic velocity perturbation for bad guy enemy (physics body)
