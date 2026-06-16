@@ -42,44 +42,8 @@ export default class LobbyScene extends Phaser.Scene {
       fill: '#a0c4ff'
     }).setOrigin(0.5);
 
-    // === LEFT SIDEBAR: CONNECTED PLAYERS (factual - only current player) ===
-    const leftX = 135;
-    const sidebarWidth = 230;
-    const sidebarTop = 160;
-    const sidebarHeight = 95;
-
-    this.add.rectangle(leftX, sidebarTop + sidebarHeight / 2, sidebarWidth, sidebarHeight, 0x0d0d1f).setStrokeStyle(2, 0x4a90e2);
-
-    this.add.text(leftX, sidebarTop - 18, 'CONNECTED PLAYERS', {
-      fontSize: '13px',
-      fill: '#4a90e2',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
-
-    // Factual: only the current player (real multiplayer not yet connected)
+    // Load player progression (needed for level-gated arenas)
     this.playerLevel = parseInt(localStorage.getItem('playerLevel') || '1');
-    const playerXP = parseInt(localStorage.getItem('playerXP') || '0');
-    const playerName = localStorage.getItem('playerName') || 'You';
-    const unlockedSkins = JSON.parse(localStorage.getItem('unlockedSkins') || '["⚡"]');
-    const currentSkin = unlockedSkins[unlockedSkins.length - 1] || '⚡';
-
-    const entryY = sidebarTop + 30;
-    this.add.circle(leftX - 72, entryY, 14, 0x3a7bd5).setStrokeStyle(1, 0x4a90e2);
-    this.add.text(leftX - 72, entryY, currentSkin, { fontSize: '16px' }).setOrigin(0.5);
-    this.add.text(leftX - 48, entryY - 6, playerName, {
-      fontSize: '13px',
-      fill: '#4ade80',
-      fontStyle: 'bold'
-    }).setOrigin(0, 0.5);
-    this.add.text(leftX - 48, entryY + 9, `Lvl ${this.playerLevel}  •  ${playerXP} XP`, {
-      fontSize: '10px',
-      fill: '#888'
-    }).setOrigin(0, 0.5);
-    this.add.text(leftX + 78, entryY, 'READY', {
-      fontSize: '10px',
-      fill: '#4ade80',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
 
     // === CENTER CONTENT: Stacked vertical buttons (one per row, centered) ===
     const centerX = width / 2;
