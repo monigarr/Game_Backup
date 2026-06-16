@@ -29,14 +29,14 @@ export default class LobbyScene extends Phaser.Scene {
       this.add.circle(120 + idx * 280, 80 + idx * 40, 3, c, 0.25);
     });
 
-    // === HEADER ===
-    this.add.text(width / 2, 28, 'ORB CHASER', {
+    // === HEADER (with flanking emojis for visual balance) ===
+    this.add.text(width / 2, 28, '⚡  ORB CHASER  ⚡', {
       fontSize: '42px',
       fill: '#4a90e2',
       fontStyle: 'bold'
     }).setOrigin(0.5);
     // Neon glow layers for title
-    this.add.text(width / 2, 28, 'ORB CHASER', {
+    this.add.text(width / 2, 28, '⚡  ORB CHASER  ⚡', {
       fontSize: '42px',
       fill: '#4a90e2',
       fontStyle: 'bold',
@@ -47,11 +47,11 @@ export default class LobbyScene extends Phaser.Scene {
       fill: '#a0c4ff'
     }).setOrigin(0.5);
 
-    // === LEFT SIDEBAR: CONNECTED PLAYERS (avatar style) ===
+    // === LEFT SIDEBAR: CONNECTED PLAYERS (factual - only current player) ===
     const leftX = 135;
     const sidebarWidth = 230;
-    const sidebarTop = 95;
-    const sidebarHeight = 310;
+    const sidebarTop = 160;
+    const sidebarHeight = 95;
 
     this.add.rectangle(leftX, sidebarTop + sidebarHeight / 2, sidebarWidth, sidebarHeight, 0x0d0d1f).setStrokeStyle(2, 0x4a90e2);
 
@@ -61,51 +61,34 @@ export default class LobbyScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    // Sample players matching reference vibe (including self)
+    // Factual: only the current player (real multiplayer not yet connected)
     this.playerLevel = parseInt(localStorage.getItem('playerLevel') || '1');
     const playerXP = parseInt(localStorage.getItem('playerXP') || '0');
     const playerName = localStorage.getItem('playerName') || 'You';
     const unlockedSkins = JSON.parse(localStorage.getItem('unlockedSkins') || '["⚡"]');
     const currentSkin = unlockedSkins[unlockedSkins.length - 1] || '⚡';
 
-    const samplePlayers = [
-      { name: playerName, skin: currentSkin, level: this.playerLevel, xp: playerXP, ready: true, isSelf: true },
-      { name: 'NeonNinja', skin: '🥷', level: 8, xp: 420, ready: true },
-      { name: 'OrbWhisper', skin: '🌟', level: 6, xp: 310, ready: true },
-      { name: 'CosmicDrift', skin: '☄️', level: 5, xp: 240, ready: false },
-      { name: 'PixelProwler', skin: '👾', level: 9, xp: 580, ready: true },
-      { name: 'VoidRunner42', skin: '🚀', level: 4, xp: 180, ready: false },
-      { name: 'StarChaser', skin: '🌈', level: 7, xp: 390, ready: true }
-    ];
-
-    samplePlayers.forEach((p, i) => {
-      const y = sidebarTop + 22 + i * 38;
-      // Avatar circle
-      const avatarColor = p.isSelf ? 0x3a7bd5 : (p.ready ? 0x2a5a3c : 0x3a3a4a);
-      this.add.circle(leftX - 72, y, 14, avatarColor).setStrokeStyle(1, 0x4a90e2);
-      this.add.text(leftX - 72, y, p.skin, { fontSize: '16px' }).setOrigin(0.5);
-      // Name + level
-      this.add.text(leftX - 48, y - 6, p.name, {
-        fontSize: '13px',
-        fill: p.isSelf ? '#4ade80' : '#fff',
-        fontStyle: p.isSelf ? 'bold' : 'normal'
-      }).setOrigin(0, 0.5);
-      this.add.text(leftX - 48, y + 9, `Lvl ${p.level}  •  ${p.xp} XP`, {
-        fontSize: '10px',
-        fill: '#888'
-      }).setOrigin(0, 0.5);
-      // Ready badge
-      const statusColor = p.ready ? '#4ade80' : '#f59e0b';
-      this.add.text(leftX + 78, y, p.ready ? 'READY' : 'PREP', {
-        fontSize: '10px',
-        fill: statusColor,
-        fontStyle: 'bold'
-      }).setOrigin(0.5);
-    });
+    const entryY = sidebarTop + 30;
+    this.add.circle(leftX - 72, entryY, 14, 0x3a7bd5).setStrokeStyle(1, 0x4a90e2);
+    this.add.text(leftX - 72, entryY, currentSkin, { fontSize: '16px' }).setOrigin(0.5);
+    this.add.text(leftX - 48, entryY - 6, playerName, {
+      fontSize: '13px',
+      fill: '#4ade80',
+      fontStyle: 'bold'
+    }).setOrigin(0, 0.5);
+    this.add.text(leftX - 48, entryY + 9, `Lvl ${this.playerLevel}  •  ${playerXP} XP`, {
+      fontSize: '10px',
+      fill: '#888'
+    }).setOrigin(0, 0.5);
+    this.add.text(leftX + 78, entryY, 'READY', {
+      fontSize: '10px',
+      fill: '#4ade80',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
 
     // === CENTER: ARENA PREVIEW (reference style) ===
     const centerX = width / 2;
-    const previewY = 195;
+    const previewY = 260;
     const previewW = 380;
     const previewH = 260;
 
@@ -145,8 +128,40 @@ export default class LobbyScene extends Phaser.Scene {
       fill: '#4ade80'
     }).setOrigin(0.5);
 
+    // === ARENA SELECT (level gated, factual feature) ===
+    const arenaSelY = previewY + 175;
+    this.add.text(centerX, arenaSelY, 'ARENAS (Level Gated)', {
+      fontSize: '12px',
+      fill: '#888'
+    }).setOrigin(0.5);
+
+    const aBtnW = 90;
+    const aBtnH = 36;
+    const aGap = 20;
+
+    // Arena 1 (always available)
+    const a1 = this.add.rectangle(centerX - aBtnW - aGap, arenaSelY + 28, aBtnW, aBtnH, 0x2a5a3c).setInteractive();
+    this.add.text(centerX - aBtnW - aGap, arenaSelY + 28, 'Arena 1', { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
+    a1.on('pointerdown', () => this.startArena(1));
+
+    // Arena 2 (level >= 4)
+    const a2Color = this.playerLevel >= 4 ? 0x2a5a3c : 0x333333;
+    const a2 = this.add.rectangle(centerX, arenaSelY + 28, aBtnW, aBtnH, a2Color).setInteractive();
+    this.add.text(centerX, arenaSelY + 28, 'Arena 2', { fontSize: '14px', fill: this.playerLevel >= 4 ? '#fff' : '#666' }).setOrigin(0.5);
+    if (this.playerLevel >= 4) {
+      a2.on('pointerdown', () => this.startArena(2));
+    }
+
+    // Arena 3 (level >= 7)
+    const a3Color = this.playerLevel >= 7 ? 0x2a5a3c : 0x333333;
+    const a3 = this.add.rectangle(centerX + aBtnW + aGap, arenaSelY + 28, aBtnW, aBtnH, a3Color).setInteractive();
+    this.add.text(centerX + aBtnW + aGap, arenaSelY + 28, 'Arena 3', { fontSize: '14px', fill: this.playerLevel >= 7 ? '#fff' : '#666' }).setOrigin(0.5);
+    if (this.playerLevel >= 7) {
+      a3.on('pointerdown', () => this.startArena(3));
+    }
+
     // === AUTHENTIC GAMEPLAY BUTTONS (spaced under arena preview, below sidebar) ===
-    const btnY = previewY + 220;
+    const btnY = previewY + 260;
     const btnWidth = 200;
     const btnHeight = 44;
     const gap = 40; // space between buttons
