@@ -1,13 +1,9 @@
-import Phaser from 'phaser';
+﻿import Phaser from 'phaser';
 import SocketManager from '../game/SocketManager';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super({ key: 'GameScene' });
-  }
-
-  preload() {
-    this.load.image('unityEnemy', '/assets/unity-enemy.png');
   }
 
   init(data) {
@@ -72,7 +68,10 @@ export default class GameScene extends Phaser.Scene {
       orb.body.setImmovable(true);
       orb.body.setCircle(10);
       orb.orbId = 'orb' + i;
-      this.add.rectangle(pos[0], pos[1], 26, 26, color, 0.2).setOrigin(0.5);
+      // Layered circles for a glowing orb effect
+      this.add.circle(pos[0], pos[1], 16, color, 0.15).setOrigin(0.5);
+      this.add.circle(pos[0], pos[1], 11, color, 0.35).setOrigin(0.5);
+      this.add.circle(pos[0], pos[1], 6, 0xffffff, 0.9).setOrigin(0.5);
       this.orbs.add(orb);
     });
 
@@ -83,9 +82,9 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.hazardBody, this.hitHazard, null, this);
 
     // Unity enemy bad guy - bounces chaotically, steals 1 point on touch
-    this.unityEnemy = this.physics.add.image(200 + Math.random() * 100, 250 + Math.random() * 100, 'unityEnemy');
-    this.unityEnemy.setDisplaySize(42, 42);
-    this.unityEnemy.body.setCircle(21);
+    this.unityEnemy = this.add.text(200 + Math.random() * 100, 250 + Math.random() * 100, '👹', { fontSize: '52px' }).setOrigin(0.5);
+    this.physics.add.existing(this.unityEnemy);
+    this.unityEnemy.body.setCircle(24);
     this.unityEnemy.setBounce(1, 1);
     this.unityEnemy.setCollideWorldBounds(true);
     const initialSpeed = 180 + Math.random() * 80;
@@ -185,7 +184,10 @@ export default class GameScene extends Phaser.Scene {
         newOrb.body.setImmovable(true);
         newOrb.body.setCircle(10);
         newOrb.orbId = 'orb' + Date.now();
-        this.add.rectangle(newOrb.x, newOrb.y, 26, 26, color, 0.2).setOrigin(0.5);
+        // Layered circles for a glowing orb effect (match initial spawn)
+        this.add.circle(newOrb.x, newOrb.y, 16, color, 0.15).setOrigin(0.5);
+        this.add.circle(newOrb.x, newOrb.y, 11, color, 0.35).setOrigin(0.5);
+        this.add.circle(newOrb.x, newOrb.y, 6, 0xffffff, 0.9).setOrigin(0.5);
         this.orbs.add(newOrb);
         this.physics.add.overlap(this.player, newOrb, this.collectOrb, null, this);
       }
