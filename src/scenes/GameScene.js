@@ -35,8 +35,11 @@ export default class GameScene extends Phaser.Scene {
     this.walls.create(width-50, height/2, null).setDisplaySize(10, height-80).setTint(0x4a90e2).refreshBody();
 
     // Hazard / obstacle orb (distinct shape + consistent warning color, different from collectible orbs)
+    // Positioned in top-left corner (away from center and walls)
     const hazardColor = 0xff3333; // consistent red hazard color
-    this.hazardBody = this.physics.add.image(width/2, height/2, null);
+    const hazardX = 80;
+    const hazardY = 80;
+    this.hazardBody = this.physics.add.image(hazardX, hazardY, null);
     this.hazardBody.setDisplaySize(28, 28);
     // Keep the physics body slightly transparent so the visual orb/X are the main cue
     this.hazardBody.setAlpha(0.15);
@@ -45,10 +48,10 @@ export default class GameScene extends Phaser.Scene {
     this.hazardBody.rotationSpeed = 0.03 * this.arenaLevel;
 
     // Visual hazard orb: solid red core + warning X shape (distinct from layered glowing collectible orbs)
-    this.hazardOrb = this.add.circle(width/2, height/2, 14, hazardColor, 0.95).setOrigin(0.5);
+    this.hazardOrb = this.add.circle(hazardX, hazardY, 14, hazardColor, 0.95).setOrigin(0.5);
     // X overlay for "obstacle" feel
-    this.hazardX1 = this.add.rectangle(width/2, height/2, 22, 4, 0xffffff, 0.9).setOrigin(0.5).setRotation(Math.PI / 4);
-    this.hazardX2 = this.add.rectangle(width/2, height/2, 22, 4, 0xffffff, 0.9).setOrigin(0.5).setRotation(-Math.PI / 4);
+    this.hazardX1 = this.add.rectangle(hazardX, hazardY, 22, 4, 0xffffff, 0.9).setOrigin(0.5).setRotation(Math.PI / 4);
+    this.hazardX2 = this.add.rectangle(hazardX, hazardY, 22, 4, 0xffffff, 0.9).setOrigin(0.5).setRotation(-Math.PI / 4);
 
     this.add.text(width/2, 25, `ORB C H A S E  |  Arena ${this.arenaLevel}  |  Room: ${this.roomCode}`, {
       fontSize: '18px',
