@@ -53,7 +53,7 @@ export default class GameScene extends Phaser.Scene {
     this.player.setAlpha(0);
     this.player.body.setCollideWorldBounds(true);
     this.player.body.setCircle(16);
-    this.playerEmoji = this.add.text(width/2, height/2, getEmoji(this.playerId), { fontSize: '22px' }).setOrigin(0.5);
+    this.playerEmoji = this.add.text(width/2, height/2, getEmoji(this.playerId), { fontSize: '22px' }).setOrigin(0.5).setDepth(10);
 
     this.orbs = this.physics.add.group();
     const orbPositions = this.arenaLevel === 1 ? 
@@ -81,17 +81,17 @@ export default class GameScene extends Phaser.Scene {
     // Hazard overlap (after player exists)
     this.physics.add.overlap(this.player, this.hazardBody, this.hitHazard, null, this);
 
-    // Unity enemy bad guy - bounces chaotically, steals 1 point on touch
-    this.unityEnemy = this.add.text(200 + Math.random() * 100, 250 + Math.random() * 100, '👹', { fontSize: '52px' }).setOrigin(0.5);
-    this.physics.add.existing(this.unityEnemy);
-    this.unityEnemy.body.setCircle(24);
-    this.unityEnemy.setBounce(1, 1);
-    this.unityEnemy.setCollideWorldBounds(true);
+    // Bad guy enemy - bounces chaotically, steals 1 point on touch (large emoji, no Unity logo)
+    this.badGuy = this.add.text(200 + Math.random() * 100, 250 + Math.random() * 100, '👹', { fontSize: '64px' }).setOrigin(0.5);
+    this.physics.add.existing(this.badGuy);
+    this.badGuy.body.setCircle(24);
+    this.badGuy.setBounce(1, 1);
+    this.badGuy.setCollideWorldBounds(true);
     const initialSpeed = 180 + Math.random() * 80;
     const angle = Math.random() * Math.PI * 2;
-    this.unityEnemy.setVelocity(Math.cos(angle) * initialSpeed, Math.sin(angle) * initialSpeed);
-    this.physics.add.collider(this.unityEnemy, this.walls);
-    this.physics.add.overlap(this.player, this.unityEnemy, this.hitUnityEnemy, null, this);
+    this.badGuy.setVelocity(Math.cos(angle) * initialSpeed, Math.sin(angle) * initialSpeed);
+    this.physics.add.collider(this.badGuy, this.walls);
+    this.physics.add.overlap(this.player, this.badGuy, this.hitBadGuy, null, this);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys('W,A,S,D,SPACE');
@@ -132,14 +132,27 @@ export default class GameScene extends Phaser.Scene {
     };
     this.onPlayerJoined = (data) => {
       if (data.id === this.socketManager.socket.id) return;
+      if (this.otherPlayers.has(data.id)) return;
       const other = this.physics.add.image(data.x || 300, data.y || 400, null);
       other.setDisplaySize(28, 28);
       other.setAlpha(0);
       other.body.setCircle(14);
       other.playerId = data.id;
-      const emoji = this.add.text(data.x || 300, data.y || 400, getEmoji(data.id), { fontSize: '20px' }).setOrigin(0.5);
+      const emoji = this.add.text(data.x || 300, data.y || 400, getEmoji(data.id), { fontSize: '20px' }).setOrigin(0.5).setDepth(10);
       this.otherPlayerEmojis.set(data.id, emoji);
       this.otherPlayers.set(data.id, other);
+    };
+    this.onPlayerLeft = (data) => {
+      const other = this.otherPlayers.get(data.id);
+      if (other) {
+        other.destroy();
+        this.otherPlayers.delete(data.id);
+      }
+      const emoji = this.otherPlayerEmojis.get(data.id);
+      if (emoji) {
+        emoji.destroy();
+        this.otherPlayerEmojis.delete(data.id);
+      }
     };
     this.onPlayerMoved = (data) => {
       const other = this.otherPlayers.get(data.id);
@@ -208,7 +221,7 @@ export default class GameScene extends Phaser.Scene {
     this.player.setVelocity(bx * 4, by * 4);
   }
 
-  hitUnityEnemy(player, enemy) {
+  hitBadGuy(player, enemy) {
     // Steal 1 point from player
     const currentScore = Math.max(0, parseInt(this.scoreText.text.split(': ')[1]) - 1);
     this.scoreText.setText('SCORE: ' + currentScore);
@@ -429,11 +442,11 @@ export default class GameScene extends Phaser.Scene {
       this.hazardBody.rotation += this.hazardBody.rotationSpeed;
     }
 
-    // Occasional chaotic velocity perturbation for Unity enemy
-    if (this.unityEnemy && Math.random() < 0.015) {
-      const vx = this.unityEnemy.body.velocity.x;
-      const vy = this.unityEnemy.body.velocity.y;
-      this.unityEnemy.setVelocity(vx * (0.7 + Math.random() * 0.6), vy * (0.7 + Math.random() * 0.6));
+    // Occasional chaotic velocity perturbation for bad guy enemy
+    if (this.badGuy && Math.random() < 0.015) {
+      const vx = this.badGuy.body.velocity.x;
+      const vy = this.badGuy.body.velocity.y;
+      this.badGuy.setVelocity(vx * (0.7 + Math.random() * 0.6), vy * (0.7 + Math.random() * 0.6));
     }
   }
 }
