@@ -124,6 +124,11 @@ export default class GameScene extends Phaser.Scene {
     // Callbacks for sync (defined on scene)
     this.onRoomJoined = (data) => {
       console.log('Room joined with players:', data.players);
+      (data.players || []).forEach(p => {
+        if (p.id !== this.socketManager.socket.id) {
+          this.onPlayerJoined({ id: p.id, x: p.x, y: p.y });
+        }
+      });
     };
     this.onPlayerJoined = (data) => {
       if (data.id === this.socketManager.socket.id) return;
