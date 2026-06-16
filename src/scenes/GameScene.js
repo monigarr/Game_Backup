@@ -30,18 +30,13 @@ export default class GameScene extends Phaser.Scene {
     this.walls.create(50, height/2, null).setDisplaySize(10, height-80).setTint(0x4a90e2).refreshBody();
     this.walls.create(width-50, height/2, null).setDisplaySize(10, height-80).setTint(0x4a90e2).refreshBody();
 
-    this.hazard = this.add.graphics();
-    this.hazard.lineStyle(6, 0xff4444);
-    this.hazard.strokeLineShape(new Phaser.Geom.Line(width/2 - 120, height/2, width/2 + 120, height/2));
-    this.hazard.rotationSpeed = 0.02 * this.arenaLevel;
-    this.hazard.setPosition(width/2, height/2);
-
-    // Hazard collider (thin rotating bar for real overlap detection)
+    // Hazard collider (thin rotating bar for real overlap detection) - visual removed, mechanic preserved
     this.hazardBody = this.physics.add.image(width/2, height/2, null);
     this.hazardBody.setDisplaySize(240, 10);
     this.hazardBody.setAlpha(0);
     this.hazardBody.body.setImmovable(true);
-    this.hazardBody.body.setCircle(5); // approx for thin bar, will rotate
+    this.hazardBody.body.setCircle(5);
+    this.hazardBody.rotationSpeed = 0.02 * this.arenaLevel;
 
     this.add.text(width/2, 25, `OR B C H A S E  |  Arena ${this.arenaLevel}  |  Room: ${this.roomCode}`, {
       fontSize: '18px',
@@ -100,6 +95,11 @@ export default class GameScene extends Phaser.Scene {
     this.lastDashTime = 0;
     this.lastDirection = { x: 1, y: 0 };
     this.lastMoveEmit = 0;
+
+    // === AUDIO SETUP (Web Audio for ambient + SFX, no external assets) ===
+    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    this.ambientOscillators = [];
+    this.startAmbientMusic();
 
     this.timeLeft = 180;
     this.timerEvent = this.time.addEvent({
@@ -160,6 +160,7 @@ export default class GameScene extends Phaser.Scene {
     orb.destroy();
     const currentScore = parseInt(this.scoreText.text.split(': ')[1]) + 15;
     this.scoreText.setText('SCORE: ' + currentScore);
+    this.playOrbCollect();
     
     if (this.socketManager) this.socketManager.sendCollect(this.roomCode, orbId);
 
@@ -183,6 +184,7 @@ export default class GameScene extends Phaser.Scene {
 
   hitHazard() {
     this.flashDamage(this.player);
+    this.playHazardHit();
     // simple knockback
     const bx = this.player.x - this.hazardBody.x;
     const by = this.player.y - this.hazardBody.y;
@@ -194,6 +196,7 @@ export default class GameScene extends Phaser.Scene {
     const currentScore = Math.max(0, parseInt(this.scoreText.text.split(': ')[1]) - 1);
     this.scoreText.setText('SCORE: ' + currentScore);
     this.flashDamage(player, 120, 0xff4444, 0x00ff88);
+    this.playEnemyHit();
     // Chaotic bounce on hit
     const angle = Math.random() * Math.PI * 2;
     enemy.setVelocity(Math.cos(angle) * 220, Math.sin(angle) * 220);
@@ -205,6 +208,154 @@ export default class GameScene extends Phaser.Scene {
     this.time.delayedCall(duration, () => target.setTint(origColor));
   }
 
+  // Sound helpers using Web Audio API
+  startAmbientMusic() {
+    if (!this.audioContext) return;
+    // Low pulsing drone for ambient atmosphere
+    const baseFreqs = [55, 65, 82]; // deep bass notes
+    baseFreqs.forEach((freq, idx) => {
+      const osc = this.audioContext.createOscillator();
+      osc.type = idx % 2 === 0 ? 'sine' : 'sawtooth';
+      osc.frequency.value = freq;
+      const gain = this.audioContext.createGain();
+      gain.gain.value = 0.025;
+      const filter = this.audioContext.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 180;
+      // gentle LFO for pulsing
+      const lfo = this.audioContext.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = 0.4 + idx * 0.1;
+      const lfoGain = this.audioContext.createGain();
+      lfoGain.gain.value = 0.015;
+      lfo.connect(lfoGain);
+      lfoGain.connect(gain.gain);
+      lfo.start();
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.audioContext.destination);
+      osc.start();
+      this.ambientOscillators.push({ osc, gain, lfo });
+    });
+    // subtle high twinkles every few seconds
+    this.ambientTwinkleInterval = setInterval(() => {
+      if (!this.scene || this.scene.key !== 'GameScene') return;
+      this.playTwinkle();
+    }, 4200);
+  }
+
+  stopAmbientMusic() {
+    if (this.ambientTwinkleInterval) {
+      clearInterval(this.ambientTwinkleInterval);
+    }
+    this.ambientOscillators.forEach(({ osc, gain, lfo }) => {
+      try {
+        osc.stop();
+        lfo.stop();
+        gain.disconnect();
+      } catch (e) {}
+    });
+    this.ambientOscillators = [];
+  }
+
+  playTwinkle() {
+    if (!this.audioContext) return;
+    const osc = this.audioContext.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 880 + Math.random() * 440;
+    const gain = this.audioContext.createGain();
+    gain.gain.value = 0.12;
+    const filter = this.audioContext.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = 600;
+    const decay = this.audioContext.createGain();
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(decay);
+    decay.connect(this.audioContext.destination);
+    osc.start();
+    // quick fade
+    gain.gain.setValueAtTime(0.12, this.audioContext.currentTime);
+    gain.gain.linearRampToValueAtTime(0.001, this.audioContext.currentTime + 1.2);
+    setTimeout(() => {
+      try { osc.stop(); gain.disconnect(); } catch (e) {}
+    }, 1400);
+  }
+
+  playOrbCollect() {
+    if (!this.audioContext) return;
+    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+    notes.forEach((freq, i) => {
+      setTimeout(() => {
+        const osc = this.audioContext.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const gain = this.audioContext.createGain();
+        gain.gain.value = 0.25;
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+        osc.start();
+        gain.gain.linearRampToValueAtTime(0.001, this.audioContext.currentTime + 0.35);
+        setTimeout(() => { try { osc.stop(); } catch (e) {} }, 400);
+      }, i * 85);
+    });
+  }
+
+  playDashSound() {
+    if (!this.audioContext) return;
+    const osc = this.audioContext.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = 180;
+    const gain = this.audioContext.createGain();
+    gain.gain.value = 0.2;
+    const filter = this.audioContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 600;
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.audioContext.destination);
+    osc.start();
+    // sweep down
+    osc.frequency.linearRampToValueAtTime(80, this.audioContext.currentTime + 0.28);
+    gain.gain.linearRampToValueAtTime(0.001, this.audioContext.currentTime + 0.32);
+    setTimeout(() => { try { osc.stop(); gain.disconnect(); } catch (e) {} }, 400);
+  }
+
+  playHazardHit() {
+    if (!this.audioContext) return;
+    const osc = this.audioContext.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = 110;
+    const gain = this.audioContext.createGain();
+    gain.gain.value = 0.18;
+    const filter = this.audioContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 320;
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.audioContext.destination);
+    osc.start();
+    osc.frequency.linearRampToValueAtTime(55, this.audioContext.currentTime + 0.4);
+    gain.gain.linearRampToValueAtTime(0.001, this.audioContext.currentTime + 0.45);
+    setTimeout(() => { try { osc.stop(); } catch (e) {} }, 500);
+  }
+
+  playEnemyHit() {
+    if (!this.audioContext) return;
+    // descending "steal" sound
+    const osc = this.audioContext.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = 340;
+    const gain = this.audioContext.createGain();
+    gain.gain.value = 0.22;
+    osc.connect(gain);
+    gain.connect(this.audioContext.destination);
+    osc.start();
+    osc.frequency.linearRampToValueAtTime(140, this.audioContext.currentTime + 0.35);
+    gain.gain.linearRampToValueAtTime(0.001, this.audioContext.currentTime + 0.4);
+    setTimeout(() => { try { osc.stop(); gain.disconnect(); } catch (e) {} }, 450);
+  }
+
   updateTimer() {
     this.timeLeft--;
     const min = Math.floor(this.timeLeft / 60);
@@ -213,6 +364,7 @@ export default class GameScene extends Phaser.Scene {
     
     if (this.timeLeft <= 0) {
       this.timerEvent.remove();
+      this.stopAmbientMusic();
       if (this.socketManager) this.socketManager.disconnect();
       const finalScore = parseInt(this.scoreText.text.split(': ')[1]);
       this.scene.start('ResultsScene', { score: finalScore, xpGained: Math.floor(finalScore / 2) + 25 });
@@ -246,6 +398,7 @@ export default class GameScene extends Phaser.Scene {
       let dx = vx || this.lastDirection.x;
       let dy = vy || this.lastDirection.y;
       this.player.setVelocity(dx * 3.2, dy * 3.2);
+      this.playDashSound();
       if (this.socketManager) this.socketManager.sendDash(this.roomCode, this.player.x, this.player.y);
       for (let i = 0; i < 4; i++) {
         const tx = this.player.x - (dx / 260) * 12 * i;
@@ -255,10 +408,8 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    if (this.hazard && this.hazardBody) {
-      this.hazard.rotation += this.hazard.rotationSpeed;
-      this.hazardBody.rotation = this.hazard.rotation;
-      this.hazardBody.setPosition(this.hazard.x, this.hazard.y);
+    if (this.hazardBody) {
+      this.hazardBody.rotation += this.hazardBody.rotationSpeed;
     }
 
     // Occasional chaotic velocity perturbation for Unity enemy
