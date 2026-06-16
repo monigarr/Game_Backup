@@ -32,6 +32,15 @@ export default class GameScene extends Phaser.Scene {
     this.hazard.rotationSpeed = 0.02 * this.arenaLevel;
     this.hazard.setPosition(width/2, height/2);
 
+    // Hazard collider (thin rotating bar for real overlap detection)
+    this.hazardBody = this.physics.add.image(width/2, height/2, null);
+    this.hazardBody.setDisplaySize(240, 10);
+    this.hazardBody.setAlpha(0);
+    this.hazardBody.body.setImmovable(true);
+    this.hazardBody.body.setCircle(5); // approx for thin bar, will rotate
+
+    this.physics.add.overlap(this.player, this.hazardBody, this.hitHazard, null, this);
+
     this.add.text(width/2, 25, `OR B C H A S E  |  Arena ${this.arenaLevel}  |  Room: ${this.roomCode}`, {
       fontSize: '18px',
       fill: '#4a90e2'
@@ -71,7 +80,9 @@ export default class GameScene extends Phaser.Scene {
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys('W,A,S,D,SPACE');
-    this.dashCooldown = 0;
+    this.lastDashTime = 0;
+    this.lastDirection = { x: 1, y: 0 };
+    this.lastMoveEmit = 0;
 
     this.timeLeft = 180;
     this.timerEvent = this.time.addEvent({
@@ -106,9 +117,12 @@ export default class GameScene extends Phaser.Scene {
     this.onPlayerMoved = (data) => {
       const other = this.otherPlayers.get(data.id);
       if (other) {
-        // Simple reconciliation: lerp towards server pos
-        other.x = Phaser.Math.Linear(other.x, data.x, 0.6);
-        other.y = Phaser.Math.Linear(other.y, data.y, 0.6);
+        // Smoother reconciliation with lerp + optional velocity
+        other.x = Phaser.Math.Linear(other.x, data.x, 0.5);
+        other.y = Phaser.Math.Linear(other.y, data.y, 0.5);
+        if (data.vx !== undefined && data.vy !== undefined) {
+          other.setVelocity(data.vx * 0.6, data.vy * 0.6);
+        }
       }
     };
     this.onPlayerDashed = (data) => {
@@ -150,6 +164,20 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
+  hitHazard() {
+    this.flashDamage(this.player);
+    // simple knockback
+    const bx = this.player.x - this.hazardBody.x;
+    const by = this.player.y - this.hazardBody.y;
+    this.player.setVelocity(bx * 4, by * 4);
+  }
+
+  flashDamage(target, duration = 180, flashColor = 0xff6666, origColor = 0x00ff88) {
+    if (!target) return;
+    target.setTint(flashColor);
+    this.time.delayedCall(duration, () => target.setTint(origColor));
+  }
+
   updateTimer() {
     this.timeLeft--;
     const min = Math.floor(this.timeLeft / 60);
@@ -176,26 +204,34 @@ export default class GameScene extends Phaser.Scene {
     this.player.setVelocity(vx, vy);
     this.playerEmoji.setPosition(this.player.x, this.player.y);
 
-    // Send position to server (throttled)
-    if (this.socketManager && this.time.now % 3 === 0) {
+    if (vx !== 0 || vy !== 0) {
+      this.lastDirection = { x: vx, y: vy };
+    }
+
+    // Send position to server (throttled ~20Hz)
+    if (this.socketManager && time > this.lastMoveEmit + 50) {
+      this.lastMoveEmit = time;
       this.socketManager.sendMove(this.roomCode, this.player.x, this.player.y, vx, vy);
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.wasd.SPACE) && this.dashCooldown <= time) {
-      this.player.setVelocity(vx * 3.2, vy * 3.2);
-      this.dashCooldown = time + 1500;
+    if (Phaser.Input.Keyboard.JustDown(this.wasd.SPACE) && time > this.lastDashTime + 1500) {
+      this.lastDashTime = time;
+      let dx = vx || this.lastDirection.x;
+      let dy = vy || this.lastDirection.y;
+      this.player.setVelocity(dx * 3.2, dy * 3.2);
       if (this.socketManager) this.socketManager.sendDash(this.roomCode, this.player.x, this.player.y);
-      const trail = this.add.rectangle(this.player.x, this.player.y, 28, 28, 0x00ff88, 0.4);
-      this.tweens.add({ targets: trail, alpha: 0, duration: 280, onComplete: () => trail.destroy() });
+      for (let i = 0; i < 4; i++) {
+        const tx = this.player.x - (dx / 260) * 12 * i;
+        const ty = this.player.y - (dy / 260) * 12 * i;
+        const trail = this.add.rectangle(tx, ty, 26, 26, 0x00ff88, 0.35 - i * 0.07);
+        this.tweens.add({ targets: trail, alpha: 0, duration: 260, onComplete: () => trail.destroy() });
+      }
     }
 
-    if (this.hazard) {
+    if (this.hazard && this.hazardBody) {
       this.hazard.rotation += this.hazard.rotationSpeed;
-      const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.hazard.x, this.hazard.y);
-      if (dist < 130 && this.timeLeft % 3 === 0) {
-        this.player.setTint(0xff6666);
-        this.time.delayedCall(180, () => this.player.setTint(0x00ff88));
-      }
+      this.hazardBody.rotation = this.hazard.rotation;
+      this.hazardBody.setPosition(this.hazard.x, this.hazard.y);
     }
   }
 }
