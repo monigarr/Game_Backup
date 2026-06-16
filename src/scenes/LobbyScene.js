@@ -141,13 +141,15 @@ export default class LobbyScene extends Phaser.Scene {
 
     // Arena 1 (always available)
     const a1 = this.add.rectangle(centerX - aBtnW - aGap, arenaSelY + 28, aBtnW, aBtnH, 0x2a5a3c).setInteractive();
-    this.add.text(centerX - aBtnW - aGap, arenaSelY + 28, 'Arena 1', { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
+    const a1Label = this.add.text(centerX - aBtnW - aGap, arenaSelY + 28, 'Arena 1', { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
+    a1Label.disableInteractive();
     a1.on('pointerdown', () => this.startArena(1));
 
     // Arena 2 (level >= 4)
     const a2Color = this.playerLevel >= 4 ? 0x2a5a3c : 0x333333;
     const a2 = this.add.rectangle(centerX, arenaSelY + 28, aBtnW, aBtnH, a2Color).setInteractive();
-    this.add.text(centerX, arenaSelY + 28, 'Arena 2', { fontSize: '14px', fill: this.playerLevel >= 4 ? '#fff' : '#666' }).setOrigin(0.5);
+    const a2Label = this.add.text(centerX, arenaSelY + 28, 'Arena 2', { fontSize: '14px', fill: this.playerLevel >= 4 ? '#fff' : '#666' }).setOrigin(0.5);
+    a2Label.disableInteractive();
     if (this.playerLevel >= 4) {
       a2.on('pointerdown', () => this.startArena(2));
     }
@@ -155,7 +157,8 @@ export default class LobbyScene extends Phaser.Scene {
     // Arena 3 (level >= 7)
     const a3Color = this.playerLevel >= 7 ? 0x2a5a3c : 0x333333;
     const a3 = this.add.rectangle(centerX + aBtnW + aGap, arenaSelY + 28, aBtnW, aBtnH, a3Color).setInteractive();
-    this.add.text(centerX + aBtnW + aGap, arenaSelY + 28, 'Arena 3', { fontSize: '14px', fill: this.playerLevel >= 7 ? '#fff' : '#666' }).setOrigin(0.5);
+    const a3Label = this.add.text(centerX + aBtnW + aGap, arenaSelY + 28, 'Arena 3', { fontSize: '14px', fill: this.playerLevel >= 7 ? '#fff' : '#666' }).setOrigin(0.5);
+    a3Label.disableInteractive();
     if (this.playerLevel >= 7) {
       a3.on('pointerdown', () => this.startArena(3));
     }
@@ -168,11 +171,12 @@ export default class LobbyScene extends Phaser.Scene {
 
     // QUICK MATCH
     const quickBtn = this.add.rectangle(centerX - btnWidth - gap, btnY, btnWidth, btnHeight, 0x1a5a3c).setInteractive();
-    this.add.text(centerX - btnWidth - gap, btnY, 'QUICK MATCH', {
+    const quickLabel = this.add.text(centerX - btnWidth - gap, btnY, 'QUICK MATCH', {
       fontSize: '18px',
       fill: '#fff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
+    quickLabel.disableInteractive();
     quickBtn.on('pointerdown', () => {
       const roomCode = 'QUICK-' + Date.now().toString().slice(-5);
       const pName = localStorage.getItem('playerName') || 'Player';
@@ -183,11 +187,12 @@ export default class LobbyScene extends Phaser.Scene {
 
     // CREATE ROOM
     const createBtn = this.add.rectangle(centerX, btnY, btnWidth, btnHeight, 0x1a3a5c).setInteractive();
-    this.add.text(centerX, btnY, 'CREATE ROOM', {
+    const createLabel = this.add.text(centerX, btnY, 'CREATE ROOM', {
       fontSize: '18px',
       fill: '#fff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
+    createLabel.disableInteractive();
     createBtn.on('pointerdown', () => {
       const roomCode = 'ROOM-' + Date.now().toString().slice(-4);
       const pName = localStorage.getItem('playerName') || 'Player';
@@ -198,11 +203,12 @@ export default class LobbyScene extends Phaser.Scene {
 
     // JOIN ROOM
     const joinBtn = this.add.rectangle(centerX + btnWidth + gap, btnY, btnWidth, btnHeight, 0x1a3a5c).setInteractive();
-    this.add.text(centerX + btnWidth + gap, btnY, 'JOIN ROOM', {
+    const joinLabel = this.add.text(centerX + btnWidth + gap, btnY, 'JOIN ROOM', {
       fontSize: '18px',
       fill: '#fff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
+    joinLabel.disableInteractive();
     joinBtn.on('pointerdown', () => this.enterJoinMode());
     joinBtn.on('pointerover', () => joinBtn.setFillStyle(0x2a5a8c));
     joinBtn.on('pointerout', () => joinBtn.setFillStyle(0x1a3a5c));
@@ -243,7 +249,8 @@ export default class LobbyScene extends Phaser.Scene {
 
     // Cancel button
     const cancel = this.add.rectangle(width / 2 - 80, height / 2 + 80, 120, 36, 0x3a3a3a).setInteractive();
-    this.add.text(width / 2 - 80, height / 2 + 80, 'CANCEL', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
+    const cancelLabel = this.add.text(width / 2 - 80, height / 2 + 80, 'CANCEL', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
+    cancelLabel.disableInteractive();
     cancel.on('pointerdown', () => {
       panel.destroy();
       this.roomCodeText.destroy();
@@ -254,7 +261,8 @@ export default class LobbyScene extends Phaser.Scene {
 
     // Confirm button
     const confirmBtn = this.add.rectangle(width / 2 + 80, height / 2 + 80, 120, 36, 0x1a5a3c).setInteractive();
-    this.add.text(width / 2 + 80, height / 2 + 80, 'JOIN', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
+    const confirmLabel = this.add.text(width / 2 + 80, height / 2 + 80, 'JOIN', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
+    confirmLabel.disableInteractive();
     confirmBtn.on('pointerdown', () => {
       if (this.typedCode.length >= 3) {
         const playerName = localStorage.getItem('playerName') || 'Player';
