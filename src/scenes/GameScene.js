@@ -128,10 +128,8 @@ export default class GameScene extends Phaser.Scene {
     this.lastDirection = { x: 1, y: 0 };
     this.lastMoveEmit = 0;
 
-    // === AUDIO SETUP (Web Audio for ambient + SFX, no external assets) ===
+    // === AUDIO SETUP (Web Audio SFX only - no ambient music) ===
     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    this.ambientOscillators = [];
-    this.startAmbientMusic();
 
     this.timeLeft = 180;
     this.timerEvent = this.time.addEvent({
@@ -221,15 +219,11 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.socketManager) this.socketManager.sendCollect(this.roomCode, orbId);
 
-    // Visual feedback: scale up and fade out so player sees the orb was touched
-    this.tweens.add({
-      targets: orb,
-      scaleX: 2.8,
-      scaleY: 2.8,
-      alpha: 0,
-      duration: 160,
-      ease: 'Quad.easeOut',
-      onComplete: () => orb.destroy()
+    // Visual feedback: turn orb plain grey to show it was collected and no longer gives points
+    orb.setTint(0x888888);
+    // Destroy shortly after so the grey state is visible
+    this.time.delayedCall(260, () => {
+      if (orb && orb.scene) orb.destroy();
     });
 
     this.time.delayedCall(2200, () => {
@@ -282,80 +276,7 @@ export default class GameScene extends Phaser.Scene {
     this.time.delayedCall(duration, () => target.setTint(origColor));
   }
 
-  // Sound helpers using Web Audio API
-  startAmbientMusic() {
-    if (!this.audioContext) return;
-    // Low pulsing drone for ambient atmosphere
-    const baseFreqs = [55, 65, 82]; // deep bass notes
-    baseFreqs.forEach((freq, idx) => {
-      const osc = this.audioContext.createOscillator();
-      osc.type = idx % 2 === 0 ? 'sine' : 'sawtooth';
-      osc.frequency.value = freq;
-      const gain = this.audioContext.createGain();
-      gain.gain.value = 0.025;
-      const filter = this.audioContext.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = 180;
-      // gentle LFO for pulsing
-      const lfo = this.audioContext.createOscillator();
-      lfo.type = 'sine';
-      lfo.frequency.value = 0.4 + idx * 0.1;
-      const lfoGain = this.audioContext.createGain();
-      lfoGain.gain.value = 0.015;
-      lfo.connect(lfoGain);
-      lfoGain.connect(gain.gain);
-      lfo.start();
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.audioContext.destination);
-      osc.start();
-      this.ambientOscillators.push({ osc, gain, lfo });
-    });
-    // subtle high twinkles every few seconds
-    this.ambientTwinkleInterval = setInterval(() => {
-      if (!this.scene || this.scene.key !== 'GameScene') return;
-      this.playTwinkle();
-    }, 4200);
-  }
-
-  stopAmbientMusic() {
-    if (this.ambientTwinkleInterval) {
-      clearInterval(this.ambientTwinkleInterval);
-    }
-    this.ambientOscillators.forEach(({ osc, gain, lfo }) => {
-      try {
-        osc.stop();
-        lfo.stop();
-        gain.disconnect();
-      } catch (e) {}
-    });
-    this.ambientOscillators = [];
-  }
-
-  playTwinkle() {
-    if (!this.audioContext) return;
-    const osc = this.audioContext.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.value = 880 + Math.random() * 440;
-    const gain = this.audioContext.createGain();
-    gain.gain.value = 0.12;
-    const filter = this.audioContext.createBiquadFilter();
-    filter.type = 'highpass';
-    filter.frequency.value = 600;
-    const decay = this.audioContext.createGain();
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(decay);
-    decay.connect(this.audioContext.destination);
-    osc.start();
-    // quick fade
-    gain.gain.setValueAtTime(0.12, this.audioContext.currentTime);
-    gain.gain.linearRampToValueAtTime(0.001, this.audioContext.currentTime + 1.2);
-    setTimeout(() => {
-      try { osc.stop(); gain.disconnect(); } catch (e) {}
-    }, 1400);
-  }
-
+  // Sound helpers using Web Audio API (SFX only)
   playOrbCollect() {
     if (!this.audioContext) return;
     const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
@@ -438,7 +359,6 @@ export default class GameScene extends Phaser.Scene {
     
     if (this.timeLeft <= 0) {
       this.timerEvent.remove();
-      this.stopAmbientMusic();
       if (this.socketManager) this.socketManager.disconnect();
       const finalScore = parseInt(this.scoreText.text.split(': ')[1]);
       const xpGained = Math.floor(finalScore / 2) + 25 + (this.arenaLevel * 10);
