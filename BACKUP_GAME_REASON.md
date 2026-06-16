@@ -2,7 +2,7 @@
 
 A Short Horror Story for Future Gauntlet Challengers
 
-There once was a brave Gauntlet AI for America Challenger named.
+There once was a brave Gauntlet AI for America Challenger.
 
 Like many Challengers before her, she stared into the abyss of a looming MVP deadline and confidently declared:
 
@@ -12,7 +12,7 @@ The ancient engineering spirits immediately began laughing.
 
 At first, everything seemed normal.
 
-Monica opened Unity.
+They opened Unity.
 
 Unity AI Assist opened.
 
@@ -102,7 +102,7 @@ The reviewer slowly typed:
 >
 > We remain hopeful that the challenger can still meet the Final Submission requirements."
 
-Monica's blood ran cold.
+The software engineer's blood ran cold.
 
 Every Challenger knew the legend.
 
@@ -144,7 +144,7 @@ Grok.
 
 The twin spirits of emergency software engineering.
 
-Monica opened a new folder.
+They opened a new folder.
 
 A fresh project.
 
