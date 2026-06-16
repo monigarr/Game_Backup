@@ -86,57 +86,63 @@ export default class LobbyScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    // === CENTER CONTENT: Arena selection + main action buttons ===
+    // === CENTER CONTENT: Stacked vertical buttons (one per row, centered) ===
     const centerX = width / 2;
+    const startY = 170;
+    const btnW = 320;
+    const btnH = 52;
+    const rowGap = 14;
 
-    // Arena selector (level gated, factual feature) - placed cleanly below header/sidebar
-    const arenaY = 180;
-    this.add.text(centerX, arenaY, 'ARENAS (Level Gated)', {
-      fontSize: '13px',
+    // === ARENA SELECT (Level Gated) - Easy / Med / Hard labels ===
+    this.add.text(centerX, startY, 'SELECT ARENA', {
+      fontSize: '14px',
       fill: '#888'
     }).setOrigin(0.5);
 
-    const aBtnW = 100;
-    const aBtnH = 40;
-    const aGap = 24;
-
-    // Arena 1 (always available)
-    const a1 = this.add.rectangle(centerX - aBtnW - aGap, arenaY + 35, aBtnW, aBtnH, 0x2a5a3c).setInteractive();
-    const a1Label = this.add.text(centerX - aBtnW - aGap, arenaY + 35, 'Arena 1', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
+    // Arena 1: Easy (always available)
+    const a1Y = startY + 38;
+    const a1 = this.add.rectangle(centerX, a1Y, btnW, btnH, 0x2a5a3c).setInteractive();
+    const a1Label = this.add.text(centerX, a1Y, 'Arena 1: Easy', { fontSize: '20px', fill: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
     a1Label.disableInteractive();
     a1.on('pointerdown', () => this.startArena(1));
+    a1.on('pointerover', () => a1.setFillStyle(0x3a7a4c));
+    a1.on('pointerout', () => a1.setFillStyle(0x2a5a3c));
 
-    // Arena 2 (level >= 4)
+    // Arena 2: Med (level >= 4)
+    const a2Y = a1Y + btnH + rowGap;
     const a2Color = this.playerLevel >= 4 ? 0x2a5a3c : 0x333333;
-    const a2 = this.add.rectangle(centerX, arenaY + 35, aBtnW, aBtnH, a2Color).setInteractive();
-    const a2Label = this.add.text(centerX, arenaY + 35, 'Arena 2', { fontSize: '16px', fill: this.playerLevel >= 4 ? '#fff' : '#666' }).setOrigin(0.5);
+    const a2 = this.add.rectangle(centerX, a2Y, btnW, btnH, a2Color).setInteractive();
+    const a2Label = this.add.text(centerX, a2Y, 'Arena 2: Med', { fontSize: '20px', fill: this.playerLevel >= 4 ? '#fff' : '#666', fontStyle: 'bold' }).setOrigin(0.5);
     a2Label.disableInteractive();
     if (this.playerLevel >= 4) {
       a2.on('pointerdown', () => this.startArena(2));
+      a2.on('pointerover', () => a2.setFillStyle(0x3a7a4c));
+      a2.on('pointerout', () => a2.setFillStyle(0x2a5a3c));
     }
 
-    // Arena 3 (level >= 7)
+    // Arena 3: Hard (level >= 7)
+    const a3Y = a2Y + btnH + rowGap;
     const a3Color = this.playerLevel >= 7 ? 0x2a5a3c : 0x333333;
-    const a3 = this.add.rectangle(centerX + aBtnW + aGap, arenaY + 35, aBtnW, aBtnH, a3Color).setInteractive();
-    const a3Label = this.add.text(centerX + aBtnW + aGap, arenaY + 35, 'Arena 3', { fontSize: '16px', fill: this.playerLevel >= 7 ? '#fff' : '#666' }).setOrigin(0.5);
+    const a3 = this.add.rectangle(centerX, a3Y, btnW, btnH, a3Color).setInteractive();
+    const a3Label = this.add.text(centerX, a3Y, 'Arena 3: Hard', { fontSize: '20px', fill: this.playerLevel >= 7 ? '#fff' : '#666', fontStyle: 'bold' }).setOrigin(0.5);
     a3Label.disableInteractive();
     if (this.playerLevel >= 7) {
       a3.on('pointerdown', () => this.startArena(3));
+      a3.on('pointerover', () => a3.setFillStyle(0x3a7a4c));
+      a3.on('pointerout', () => a3.setFillStyle(0x2a5a3c));
     }
 
-    // === MAIN ACTION BUTTONS (spaced below arena selector) ===
-    const btnY = arenaY + 110;
-    const btnWidth = 220;
-    const btnHeight = 48;
-    const gap = 48;
+    // === MAIN ACTION BUTTONS (stacked below arenas) ===
+    const mainStartY = a3Y + btnH + 28;
+    this.add.text(centerX, mainStartY, 'MATCH OPTIONS', {
+      fontSize: '14px',
+      fill: '#888'
+    }).setOrigin(0.5);
 
     // QUICK MATCH
-    const quickBtn = this.add.rectangle(centerX - btnWidth - gap, btnY, btnWidth, btnHeight, 0x1a5a3c).setInteractive();
-    const quickLabel = this.add.text(centerX - btnWidth - gap, btnY, 'QUICK MATCH', {
-      fontSize: '20px',
-      fill: '#fff',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
+    const qY = mainStartY + 38;
+    const quickBtn = this.add.rectangle(centerX, qY, btnW, btnH, 0x1a5a3c).setInteractive();
+    const quickLabel = this.add.text(centerX, qY, 'QUICK MATCH', { fontSize: '20px', fill: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
     quickLabel.disableInteractive();
     quickBtn.on('pointerdown', () => {
       const roomCode = 'QUICK-' + Date.now().toString().slice(-5);
@@ -147,12 +153,9 @@ export default class LobbyScene extends Phaser.Scene {
     quickBtn.on('pointerout', () => quickBtn.setFillStyle(0x1a5a3c));
 
     // CREATE ROOM
-    const createBtn = this.add.rectangle(centerX, btnY, btnWidth, btnHeight, 0x1a3a5c).setInteractive();
-    const createLabel = this.add.text(centerX, btnY, 'CREATE ROOM', {
-      fontSize: '20px',
-      fill: '#fff',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
+    const cY = qY + btnH + rowGap;
+    const createBtn = this.add.rectangle(centerX, cY, btnW, btnH, 0x1a3a5c).setInteractive();
+    const createLabel = this.add.text(centerX, cY, 'CREATE ROOM', { fontSize: '20px', fill: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
     createLabel.disableInteractive();
     createBtn.on('pointerdown', () => {
       const roomCode = 'ROOM-' + Date.now().toString().slice(-4);
@@ -163,12 +166,9 @@ export default class LobbyScene extends Phaser.Scene {
     createBtn.on('pointerout', () => createBtn.setFillStyle(0x1a3a5c));
 
     // JOIN ROOM
-    const joinBtn = this.add.rectangle(centerX + btnWidth + gap, btnY, btnWidth, btnHeight, 0x1a3a5c).setInteractive();
-    const joinLabel = this.add.text(centerX + btnWidth + gap, btnY, 'JOIN ROOM', {
-      fontSize: '20px',
-      fill: '#fff',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
+    const jY = cY + btnH + rowGap;
+    const joinBtn = this.add.rectangle(centerX, jY, btnW, btnH, 0x1a3a5c).setInteractive();
+    const joinLabel = this.add.text(centerX, jY, 'JOIN ROOM', { fontSize: '20px', fill: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
     joinLabel.disableInteractive();
     joinBtn.on('pointerdown', () => this.enterJoinMode());
     joinBtn.on('pointerover', () => joinBtn.setFillStyle(0x2a5a8c));
