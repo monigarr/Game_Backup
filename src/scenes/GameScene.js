@@ -68,6 +68,7 @@ export default class GameScene extends Phaser.Scene {
       orb.body.setImmovable(true);
       orb.body.setCircle(10);
       orb.orbId = 'orb' + i;
+      orb.setAlpha(0); // hide square base so only layered glow circles are visible
       // Layered circles for a glowing orb effect
       this.add.circle(pos[0], pos[1], 16, color, 0.15).setOrigin(0.5);
       this.add.circle(pos[0], pos[1], 11, color, 0.35).setOrigin(0.5);
@@ -202,6 +203,7 @@ export default class GameScene extends Phaser.Scene {
         newOrb.body.setImmovable(true);
         newOrb.body.setCircle(10);
         newOrb.orbId = 'orb' + Date.now();
+        newOrb.setAlpha(0); // hide square base so only layered glow circles are visible
         // Layered circles for a glowing orb effect (match initial spawn)
         this.add.circle(newOrb.x, newOrb.y, 16, color, 0.15).setOrigin(0.5);
         this.add.circle(newOrb.x, newOrb.y, 11, color, 0.35).setOrigin(0.5);
