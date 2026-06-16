@@ -86,69 +86,30 @@ export default class LobbyScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    // === CENTER: ARENA PREVIEW (reference style) ===
+    // === CENTER CONTENT: Arena selection + main action buttons ===
     const centerX = width / 2;
-    const previewY = 260;
-    const previewW = 380;
-    const previewH = 260;
 
-    // Neon frame for arena preview (like the glowing border in reference)
-    this.add.rectangle(centerX, previewY, previewW + 12, previewH + 12, 0x0a0a1a).setStrokeStyle(3, 0x00f0ff);
-    this.add.rectangle(centerX, previewY, previewW, previewH, 0x0f0f22).setStrokeStyle(2, 0x4a90e2);
-
-    // Mini arena floor
-    this.add.rectangle(centerX, previewY, previewW - 20, previewH - 20, 0x1a1a3a);
-
-    // Glowing orbs inside preview (reference has several colorful ones)
-    const previewOrbs = [
-      { x: centerX - 80, y: previewY - 40, c: 0x00ffff },
-      { x: centerX + 60, y: previewY - 55, c: 0xff00aa },
-      { x: centerX + 20, y: previewY + 30, c: 0x00ff88 },
-      { x: centerX - 40, y: previewY + 50, c: 0xffaa00 }
-    ];
-    previewOrbs.forEach(o => {
-      this.add.circle(o.x, o.y, 18, o.c, 0.15);
-      this.add.circle(o.x, o.y, 11, o.c, 0.45);
-      this.add.circle(o.x, o.y, 5, 0xffffff, 0.95);
-    });
-
-    // Sample player emojis positioned like the reference screenshot
-    const previewPlayers = [
-      { x: centerX - 60, y: previewY - 10, e: '🥷' },
-      { x: centerX + 30, y: previewY - 20, e: '🌟' },
-      { x: centerX - 20, y: previewY + 35, e: '👾' },
-      { x: centerX + 70, y: previewY + 20, e: '🚀' }
-    ];
-    previewPlayers.forEach(p => {
-      this.add.text(p.x, p.y, p.e, { fontSize: '20px' }).setOrigin(0.5);
-    });
-
-    this.add.text(centerX, previewY - 115, 'NEON NEXUS  •  ARENA 1', {
-      fontSize: '12px',
-      fill: '#4ade80'
-    }).setOrigin(0.5);
-
-    // === ARENA SELECT (level gated, factual feature) ===
-    const arenaSelY = previewY + 175;
-    this.add.text(centerX, arenaSelY, 'ARENAS (Level Gated)', {
-      fontSize: '12px',
+    // Arena selector (level gated, factual feature) - placed cleanly below header/sidebar
+    const arenaY = 180;
+    this.add.text(centerX, arenaY, 'ARENAS (Level Gated)', {
+      fontSize: '13px',
       fill: '#888'
     }).setOrigin(0.5);
 
-    const aBtnW = 90;
-    const aBtnH = 36;
-    const aGap = 20;
+    const aBtnW = 100;
+    const aBtnH = 40;
+    const aGap = 24;
 
     // Arena 1 (always available)
-    const a1 = this.add.rectangle(centerX - aBtnW - aGap, arenaSelY + 28, aBtnW, aBtnH, 0x2a5a3c).setInteractive();
-    const a1Label = this.add.text(centerX - aBtnW - aGap, arenaSelY + 28, 'Arena 1', { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
+    const a1 = this.add.rectangle(centerX - aBtnW - aGap, arenaY + 35, aBtnW, aBtnH, 0x2a5a3c).setInteractive();
+    const a1Label = this.add.text(centerX - aBtnW - aGap, arenaY + 35, 'Arena 1', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
     a1Label.disableInteractive();
     a1.on('pointerdown', () => this.startArena(1));
 
     // Arena 2 (level >= 4)
     const a2Color = this.playerLevel >= 4 ? 0x2a5a3c : 0x333333;
-    const a2 = this.add.rectangle(centerX, arenaSelY + 28, aBtnW, aBtnH, a2Color).setInteractive();
-    const a2Label = this.add.text(centerX, arenaSelY + 28, 'Arena 2', { fontSize: '14px', fill: this.playerLevel >= 4 ? '#fff' : '#666' }).setOrigin(0.5);
+    const a2 = this.add.rectangle(centerX, arenaY + 35, aBtnW, aBtnH, a2Color).setInteractive();
+    const a2Label = this.add.text(centerX, arenaY + 35, 'Arena 2', { fontSize: '16px', fill: this.playerLevel >= 4 ? '#fff' : '#666' }).setOrigin(0.5);
     a2Label.disableInteractive();
     if (this.playerLevel >= 4) {
       a2.on('pointerdown', () => this.startArena(2));
@@ -156,23 +117,23 @@ export default class LobbyScene extends Phaser.Scene {
 
     // Arena 3 (level >= 7)
     const a3Color = this.playerLevel >= 7 ? 0x2a5a3c : 0x333333;
-    const a3 = this.add.rectangle(centerX + aBtnW + aGap, arenaSelY + 28, aBtnW, aBtnH, a3Color).setInteractive();
-    const a3Label = this.add.text(centerX + aBtnW + aGap, arenaSelY + 28, 'Arena 3', { fontSize: '14px', fill: this.playerLevel >= 7 ? '#fff' : '#666' }).setOrigin(0.5);
+    const a3 = this.add.rectangle(centerX + aBtnW + aGap, arenaY + 35, aBtnW, aBtnH, a3Color).setInteractive();
+    const a3Label = this.add.text(centerX + aBtnW + aGap, arenaY + 35, 'Arena 3', { fontSize: '16px', fill: this.playerLevel >= 7 ? '#fff' : '#666' }).setOrigin(0.5);
     a3Label.disableInteractive();
     if (this.playerLevel >= 7) {
       a3.on('pointerdown', () => this.startArena(3));
     }
 
-    // === AUTHENTIC GAMEPLAY BUTTONS (spaced under arena preview, below sidebar) ===
-    const btnY = previewY + 260;
-    const btnWidth = 200;
-    const btnHeight = 44;
-    const gap = 40; // space between buttons
+    // === MAIN ACTION BUTTONS (spaced below arena selector) ===
+    const btnY = arenaY + 110;
+    const btnWidth = 220;
+    const btnHeight = 48;
+    const gap = 48;
 
     // QUICK MATCH
     const quickBtn = this.add.rectangle(centerX - btnWidth - gap, btnY, btnWidth, btnHeight, 0x1a5a3c).setInteractive();
     const quickLabel = this.add.text(centerX - btnWidth - gap, btnY, 'QUICK MATCH', {
-      fontSize: '18px',
+      fontSize: '20px',
       fill: '#fff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -188,7 +149,7 @@ export default class LobbyScene extends Phaser.Scene {
     // CREATE ROOM
     const createBtn = this.add.rectangle(centerX, btnY, btnWidth, btnHeight, 0x1a3a5c).setInteractive();
     const createLabel = this.add.text(centerX, btnY, 'CREATE ROOM', {
-      fontSize: '18px',
+      fontSize: '20px',
       fill: '#fff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -204,7 +165,7 @@ export default class LobbyScene extends Phaser.Scene {
     // JOIN ROOM
     const joinBtn = this.add.rectangle(centerX + btnWidth + gap, btnY, btnWidth, btnHeight, 0x1a3a5c).setInteractive();
     const joinLabel = this.add.text(centerX + btnWidth + gap, btnY, 'JOIN ROOM', {
-      fontSize: '18px',
+      fontSize: '20px',
       fill: '#fff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
