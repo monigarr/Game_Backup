@@ -98,16 +98,21 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.hazardBody, this.hitHazard, null, this);
 
     // Bad guy enemy - bounces chaotically, steals 1 point on touch (large emoji, no Unity logo)
-    this.badGuy = this.add.text(200 + Math.random() * 100, 250 + Math.random() * 100, '👹', { fontSize: '64px' }).setOrigin(0.5);
-    this.physics.add.existing(this.badGuy);
-    this.badGuy.body.setCircle(24);
-    this.badGuy.setBounce(1, 1);
-    this.badGuy.setCollideWorldBounds(true);
+    // Use a physics body (image) with the emoji as a separate visual, matching player pattern
+    this.badGuyBody = this.physics.add.image(200 + Math.random() * 100, 250 + Math.random() * 100, null);
+    this.badGuyBody.setDisplaySize(48, 48);
+    this.badGuyBody.setAlpha(0);
+    this.badGuyBody.body.setCircle(24);
+    this.badGuyBody.body.setBounce(1, 1);
+    this.badGuyBody.body.setCollideWorldBounds(true);
     const initialSpeed = 180 + Math.random() * 80;
     const angle = Math.random() * Math.PI * 2;
-    this.badGuy.setVelocity(Math.cos(angle) * initialSpeed, Math.sin(angle) * initialSpeed);
-    this.physics.add.collider(this.badGuy, this.walls);
-    this.physics.add.overlap(this.player, this.badGuy, this.hitBadGuy, null, this);
+    this.badGuyBody.setVelocity(Math.cos(angle) * initialSpeed, Math.sin(angle) * initialSpeed);
+    this.physics.add.collider(this.badGuyBody, this.walls);
+    this.physics.add.overlap(this.player, this.badGuyBody, this.hitBadGuy, null, this);
+
+    // Visual emoji on top of the physics body
+    this.badGuy = this.add.text(this.badGuyBody.x, this.badGuyBody.y, '👹', { fontSize: '64px' }).setOrigin(0.5);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys('W,A,S,D,SPACE');
@@ -490,11 +495,16 @@ export default class GameScene extends Phaser.Scene {
       this.hazardBody.rotation += this.hazardBody.rotationSpeed;
     }
 
-    // Occasional chaotic velocity perturbation for bad guy enemy
-    if (this.badGuy && Math.random() < 0.015) {
-      const vx = this.badGuy.body.velocity.x;
-      const vy = this.badGuy.body.velocity.y;
-      this.badGuy.setVelocity(vx * (0.7 + Math.random() * 0.6), vy * (0.7 + Math.random() * 0.6));
+    // Occasional chaotic velocity perturbation for bad guy enemy (physics body)
+    if (this.badGuyBody && Math.random() < 0.015) {
+      const vx = this.badGuyBody.body.velocity.x;
+      const vy = this.badGuyBody.body.velocity.y;
+      this.badGuyBody.setVelocity(vx * (0.7 + Math.random() * 0.6), vy * (0.7 + Math.random() * 0.6));
+    }
+
+    // Keep the visual emoji positioned over the moving physics body
+    if (this.badGuy && this.badGuyBody) {
+      this.badGuy.setPosition(this.badGuyBody.x, this.badGuyBody.y);
     }
   }
 }
