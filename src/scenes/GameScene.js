@@ -233,12 +233,11 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.socketManager) this.socketManager.sendCollect(this.roomCode, orbId);
 
-    // Visual feedback: turn orb plain grey to show it was collected and no longer gives points
-    orb.setTint(0x888888);
-    // Destroy shortly after so the grey state is visible
-    this.time.delayedCall(260, () => {
-      if (orb && orb.scene) orb.destroy();
-    });
+    // Visual feedback: replace the orb with a permanent grey square at the same position
+    // so the player clearly sees where they collected an orb
+    const greySquare = this.add.rectangle(orb.x, orb.y, 18, 18, 0x888888).setOrigin(0.5);
+    // Remove from collectible group and disable physics so it cannot be collected again
+    this.orbs.remove(orb, true, true);
 
     this.time.delayedCall(2200, () => {
       if (orb.scene === undefined) {
