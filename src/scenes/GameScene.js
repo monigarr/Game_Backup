@@ -66,9 +66,16 @@ export default class GameScene extends Phaser.Scene {
     this.xpText = this.add.text(width - 140, 88, `${this.playerXP % 100}/100 XP`, { fontSize: '11px', fill: '#888' }).setOrigin(0.5);
 
     const playerEmojis = ['⚡','🔥','🌟','💎','🚀','👾','🦄','🌈','🐉','🎮'];
-    // Use unlocked skin or level-based
+    // Use unlocked skin or level-based for local player
     const currentSkin = this.unlockedSkins[this.unlockedSkins.length - 1] || playerEmojis[Math.min(this.playerLevel - 1, 9)];
-    const getEmoji = (id) => currentSkin;
+    // Deterministic emoji per player ID so everyone sees the same emoji for each player
+    const getEmoji = (id) => {
+      if (!id) return currentSkin;
+      // Simple hash of id string to pick a consistent emoji
+      let hash = 0;
+      for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
+      return playerEmojis[Math.abs(hash) % playerEmojis.length];
+    };
     this.orbColors = [0xff69b4,0x00ced1,0xda70d6,0x32cd32,0xffa500,0x4169e1,0xff1493,0x00fa9a];
 
     this.player = this.physics.add.image(width/2, height/2, null);
@@ -145,19 +152,17 @@ export default class GameScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // === MULTIPLAYER INIT ===
-    this.socketManager = new SocketManager(this);
-    this.socketManager.joinRoom(this.roomCode, 'Player' + this.playerId.slice(-3));
-
-    // Callbacks for sync (defined on scene)
+    // Define callbacks FIRST so SocketManager can wire them before joinRoom emits
     this.onRoomJoined = (data) => {
       console.log('Room joined with players:', data.players);
       (data.players || []).forEach(p => {
-        if (p.id !== this.socketManager.socket.id) {
+        if (p.id !== this.socketManager?.socket?.id) {
           this.onPlayerJoined({ id: p.id, x: p.x, y: p.y });
         }
       });
     };
     this.onPlayerJoined = (data) => {
+      if (!this.socketManager?.socket) return;
       if (data.id === this.socketManager.socket.id) return;
       if (this.otherPlayers.has(data.id)) return;
       const other = this.physics.add.image(data.x || 300, data.y || 400, null);
@@ -169,6 +174,8 @@ export default class GameScene extends Phaser.Scene {
       this.otherPlayerEmojis.set(data.id, emoji);
       this.otherPlayers.set(data.id, other);
     };
+
+    // Define remaining callbacks before joinRoom so no events are missed
     this.onPlayerLeft = (data) => {
       const other = this.otherPlayers.get(data.id);
       if (other) {
@@ -205,6 +212,10 @@ export default class GameScene extends Phaser.Scene {
       // Update score if needed
       if (data.score) this.scoreText.setText('SCORE: ' + data.score);
     };
+
+    // Now create SocketManager and join — all callbacks are ready
+    this.socketManager = new SocketManager(this);
+    this.socketManager.joinRoom(this.roomCode, 'Player' + this.playerId.slice(-3));
   }
 
   collectOrb(player, orb) {

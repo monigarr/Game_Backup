@@ -29,20 +29,15 @@ export default class LobbyScene extends Phaser.Scene {
       this.add.circle(120 + idx * 280, 80 + idx * 40, 3, c, 0.25);
     });
 
-    // === HEADER (with flanking emojis for visual balance) ===
-    this.add.text(width / 2, 28, '⚡  ORB CHASER  ⚡', {
-      fontSize: '42px',
-      fill: '#4a90e2',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
-    // Neon glow layers for title
-    this.add.text(width / 2, 28, '⚡  ORB CHASER  ⚡', {
-      fontSize: '42px',
+    // === HEADER - clean crisp title with flanking emojis ===
+    this.add.text(width / 2, 26, '⚡ ORB CHASER ⚡', {
+      fontSize: '40px',
       fill: '#4a90e2',
       fontStyle: 'bold',
-      alpha: 0.3
-    }).setOrigin(0.5).setScale(1.06);
-    this.add.text(width / 2, 55, 'MULTIPLAYER 2D ARENA', {
+      stroke: '#0a0a1a',
+      strokeThickness: 6
+    }).setOrigin(0.5);
+    this.add.text(width / 2, 52, 'MULTIPLAYER 2D ARENA', {
       fontSize: '14px',
       fill: '#a0c4ff'
     }).setOrigin(0.5);
