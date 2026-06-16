@@ -6,6 +6,10 @@ export default class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' });
   }
 
+  preload() {
+    this.load.image('unityEnemy', '/assets/unity-enemy.png');
+  }
+
   init(data) {
     this.roomCode = data.roomCode || 'TEST';
     this.isHost = data.isHost || false;
@@ -78,6 +82,18 @@ export default class GameScene extends Phaser.Scene {
 
     // Hazard overlap (after player exists)
     this.physics.add.overlap(this.player, this.hazardBody, this.hitHazard, null, this);
+
+    // Unity enemy bad guy - bounces chaotically, steals 1 point on touch
+    this.unityEnemy = this.physics.add.image(200 + Math.random() * 100, 250 + Math.random() * 100, 'unityEnemy');
+    this.unityEnemy.setDisplaySize(42, 42);
+    this.unityEnemy.body.setCircle(21);
+    this.unityEnemy.setBounce(1, 1);
+    this.unityEnemy.setCollideWorldBounds(true);
+    const initialSpeed = 180 + Math.random() * 80;
+    const angle = Math.random() * Math.PI * 2;
+    this.unityEnemy.setVelocity(Math.cos(angle) * initialSpeed, Math.sin(angle) * initialSpeed);
+    this.physics.add.collider(this.unityEnemy, this.walls);
+    this.physics.add.overlap(this.player, this.unityEnemy, this.hitUnityEnemy, null, this);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys('W,A,S,D,SPACE');
@@ -173,6 +189,16 @@ export default class GameScene extends Phaser.Scene {
     this.player.setVelocity(bx * 4, by * 4);
   }
 
+  hitUnityEnemy(player, enemy) {
+    // Steal 1 point from player
+    const currentScore = Math.max(0, parseInt(this.scoreText.text.split(': ')[1]) - 1);
+    this.scoreText.setText('SCORE: ' + currentScore);
+    this.flashDamage(player, 120, 0xff4444, 0x00ff88);
+    // Chaotic bounce on hit
+    const angle = Math.random() * Math.PI * 2;
+    enemy.setVelocity(Math.cos(angle) * 220, Math.sin(angle) * 220);
+  }
+
   flashDamage(target, duration = 180, flashColor = 0xff6666, origColor = 0x00ff88) {
     if (!target) return;
     target.setTint(flashColor);
@@ -233,6 +259,13 @@ export default class GameScene extends Phaser.Scene {
       this.hazard.rotation += this.hazard.rotationSpeed;
       this.hazardBody.rotation = this.hazard.rotation;
       this.hazardBody.setPosition(this.hazard.x, this.hazard.y);
+    }
+
+    // Occasional chaotic velocity perturbation for Unity enemy
+    if (this.unityEnemy && Math.random() < 0.015) {
+      const vx = this.unityEnemy.body.velocity.x;
+      const vy = this.unityEnemy.body.velocity.y;
+      this.unityEnemy.setVelocity(vx * (0.7 + Math.random() * 0.6), vy * (0.7 + Math.random() * 0.6));
     }
   }
 }
